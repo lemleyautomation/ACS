@@ -7,6 +7,11 @@ this can be downloaded from the Github code server with this link:
 
 # www.github.com/lemleyautomation/ACS.git
 
+requires:
+  Opencv,
+  Libmodbus,
+  Spinnaker, (FLIR product)
+
 The code can be compiled on the machine with this series of commands:
 
 
