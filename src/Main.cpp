@@ -79,7 +79,7 @@ void programLoop(){
 
         end_time = std::chrono::system_clock::now();
         float c_duration = loop_duration.update(std::chrono::duration_cast<std::chrono::milliseconds>(end_time-begin_time).count());
-        std::cout << c_duration << std::endl;
+        //std::cout << c_duration << std::endl;
 
         if (c_duration > 150){
             std::cout << "loop too slow, restarting" << std::endl;
