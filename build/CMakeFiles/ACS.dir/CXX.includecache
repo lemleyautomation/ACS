@@ -66,10 +66,6 @@ ModbusInterface.hpp
 CameraInterface.hpp
 /home/pi/Desktop/ACS/src/CameraInterface.hpp
 
-/home/pi/Desktop/ACS/src/VisionAlgorithm.cpp
-Main.hpp
-/home/pi/Desktop/ACS/src/Main.hpp
-
 /usr/include/modbus/modbus-rtu.h
 modbus.h
 /usr/include/modbus/modbus.h

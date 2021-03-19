@@ -54,7 +54,15 @@ void programLoop(){
             if (abs(dev)> 0.03 && status && getBit(_3x, 45, 3)){
                 setBit(_4x, 1, 3, 1); // set start move to high
             }
-            float servo_position_command = toFloat(_3x[49], _3x[48]) + dev;
+
+            int lr = 1;
+            if (mset.module_number > 4)
+                lr = -1;
+
+            //***********************************************************************************//
+            float servo_position_command = toFloat(_3x[49], _3x[48]) + (dev*lr);                      // actual control
+            //***********************************************************************************//
+
             toUint(_4x, 37, servo_position_command);
 
             modbus_read_registers(ctx_switch, 31, 1, &limit_switches);
