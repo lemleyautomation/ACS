@@ -38,8 +38,12 @@ void programLoop(){
             deviation.reset();
         }
         
+        int lr = 1;
+        if (mset.module_number > 4)
+            lr = -1;
+
         getMovement(&images);
-        float dev = (float)deviation.update(images.shift)/(float)ppi;
+        float dev = ((float)lr)*((float)deviation.update(images.shift)/(float)ppi);
 
         //printdiagnostics(dev);
 
@@ -55,12 +59,8 @@ void programLoop(){
                 setBit(_4x, 1, 3, 1); // set start move to high
             }
 
-            int lr = 1;
-            if (mset.module_number > 4)
-                lr = -1;
-
             //***********************************************************************************//
-            float servo_position_command = toFloat(_3x[49], _3x[48]) + (dev*lr);                      // actual control
+            float servo_position_command = toFloat(_3x[49], _3x[48]) + (dev);                      // actual control
             //***********************************************************************************//
 
             toUint(_4x, 37, servo_position_command);
