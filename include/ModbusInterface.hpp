@@ -114,10 +114,10 @@ int configure_servo(){
 }
 
 void varySpeed(float speed_factor){
-    speed_factor = abs(speed_factor / 500);
+    speed_factor = abs(speed_factor / 300);
     float acceleration = 40.0*speed_factor;
     float deceleration = 40.0*speed_factor;
-    float servo_speed  = 2.0*speed_factor;
+    float servo_speed  = 2.0;
     toUint(_4x, 21, acceleration); // accel
     toUint(_4x, 25, deceleration); // decel
     toUint(_4x, 29,  servo_speed); // speed
