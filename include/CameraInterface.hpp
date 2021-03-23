@@ -36,6 +36,9 @@ int get_new_image (CameraPtr pCam, int module){
             if (module < 5){
                 cv::flip(sample, sample, 1);
             }
+            else{
+                cv::flip(sample, sample, 0);
+            }
 
             images.current_image = sample.clone();
             images.c_stamp = std::chrono::system_clock::now();
