@@ -62,6 +62,7 @@ struct RollingAverage{
     int samples[100];
     int head = 0;
     int base = 0;
+    float avg = 0;
 
     void reset(){
         for (int i = 0; i < base; i++){
@@ -80,6 +81,7 @@ struct RollingAverage{
         }
 
         average = average / (float)base;
+        avg = average;
         return average;
     }
 };

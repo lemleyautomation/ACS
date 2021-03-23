@@ -12,7 +12,7 @@ void newPattern(){
     cv::imwrite("Pattern_new.Bmp", images.pattern_image);
 }
 
-int get_new_image (CameraPtr pCam){
+int get_new_image (CameraPtr pCam, int module){
     try
     {
         ImagePtr convertedImage = pCam->GetNextImage(120);
@@ -32,6 +32,10 @@ int get_new_image (CameraPtr pCam){
                             CV_8UC3, 
                             convertedImage->GetData(), 
                             convertedImage->GetStride());
+
+            if (module < 5){
+                cv::flip(sample, sample, 1);
+            }
 
             images.current_image = sample.clone();
             images.c_stamp = std::chrono::system_clock::now();
@@ -83,8 +87,8 @@ int startCamera(moduleSettings mset){
     
     std::cout << "acquiring" << std::endl;
 
-    get_new_image(camera_pointer);
-    get_new_image(camera_pointer);
+    get_new_image(camera_pointer, mset.module_number);
+    get_new_image(camera_pointer, mset.module_number);
 
     return 0;
 }

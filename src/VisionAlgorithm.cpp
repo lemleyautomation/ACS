@@ -23,7 +23,7 @@ void computeMovement(Images *images){
                 templat,
                 cv::Size(),
                 scale_factor, scale_factor );
-    
+
     cv::matchTemplate(image, templat, heat_map, cv::TM_CCOEFF_NORMED);
     
     double val_min, val_max;

@@ -86,8 +86,8 @@ int configure_servo(){
     x[1] = modbus_read_registers(ctx_servo, 0, 54, _4x) - 54;
     std::cout << x[1] << "...";
 
-    toUint(_4x, 21, 40.0); // accel
-    toUint(_4x, 25, 40.0); // decel
+    toUint(_4x, 21, 4.0); // accel
+    toUint(_4x, 25, 4.0); // decel
     toUint(_4x, 29,  2.0); // speed
     _4x[48] = 2;
     _4x[51] = 1;
@@ -111,6 +111,16 @@ int configure_servo(){
     time_since_move = std::chrono::system_clock::now();
 
     return x[0] + x[1] + x[2] + x[3];
+}
+
+void varySpeed(float speed_factor){
+    speed_factor = abs(speed_factor / 500);
+    float acceleration = 40.0*speed_factor;
+    float deceleration = 40.0*speed_factor;
+    float servo_speed  = 2.0*speed_factor;
+    toUint(_4x, 21, acceleration); // accel
+    toUint(_4x, 25, deceleration); // decel
+    toUint(_4x, 29,  servo_speed); // speed
 }
 
 bool checkSwitch(){

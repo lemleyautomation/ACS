@@ -7,16 +7,16 @@ void printdiagnostics(float dev){
     std::bitset<16> servo_status_word_2(_3x[45]);
     std::bitset<16> servo_status_word_3(_3x[46]);
     std::bitset<16> servo_status_word_4(_3x[47]);
-    std::bitset<16> servo_command_word_1(_4x[0]);
-    std::bitset<16> servo_command_word_3(_4x[2]);
+    //std::bitset<16> servo_command_word_1(_4x[0]);
+    //std::bitset<16> servo_command_word_3(_4x[2]);
     std::cout << servo_status_word_1 << "\t";
     std::cout << servo_status_word_2 << "\t";
     std::cout << servo_status_word_3 << "\t";
     std::cout << servo_status_word_4 << "\t";
-    std::cout << servo_command_word_1 << "\t";
-    std::cout << servo_command_word_3 << "\t";
-    std::cout << toFloat(_4x[37],_4x[36]) << " " << toFloat(_3x[49], _3x[48]) << " " << dev << " " << images.shift;
-    //std::cout << dev;//speed.update(images.travel);
+    //std::cout << servo_command_word_1 << "\t";
+    //std::cout << servo_command_word_3 << "\t";
+    //std::cout << toFloat(_4x[37],_4x[36]) << " " << toFloat(_3x[49], _3x[48]) << " " << dev << " " << images.shift;
+    std::cout << (int)speed.avg << "\t" << toFloat(_4x[21], _4x[20]) << "\t" << toFloat(_4x[29], _4x[28]);
     std::cout << std::endl;
 }
 
@@ -27,7 +27,7 @@ void programLoop(){
 
     while (true){
         begin_time = std::chrono::system_clock::now(); 
-        if (get_new_image(camera_pointer))
+        if (get_new_image(camera_pointer, mset.module_number))
             continue;
         
 
@@ -38,14 +38,12 @@ void programLoop(){
             deviation.reset();
         }
         
-        int lr = 1;
-        if (mset.module_number > 4)
-            lr = -1;
-
         getMovement(&images);
-        float dev = ((float)lr)*((float)deviation.update(images.shift)/(float)ppi);
+        float dev = ((float)deviation.update(images.shift)/(float)ppi);
 
-        //printdiagnostics(dev);
+        printdiagnostics(dev);
+
+        varySpeed(speed.update(images.travel));
 
         std::chrono::milliseconds dwell_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-time_since_move);
         if (dwell_time.count() > 30 && dwell_time.count() < 90){
@@ -60,7 +58,7 @@ void programLoop(){
             }
 
             //***********************************************************************************//
-            float servo_position_command = toFloat(_3x[49], _3x[48]) + (dev);                      // actual control
+            float servo_position_command = toFloat(_3x[49], _3x[48]) + (dev);                    // actual control
             //***********************************************************************************//
 
             toUint(_4x, 37, servo_position_command);
@@ -131,7 +129,7 @@ int main(int argc, char **argv){
         std::cout << "servo configured successfully" << std::endl;
     }
 
-    speed.base = 35;
+    speed.base = 6;
     deviation.base = 14;
 
     programLoop();
