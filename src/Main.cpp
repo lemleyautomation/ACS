@@ -41,7 +41,7 @@ void programLoop(){
         getMovement(&images);
         float dev = ((float)deviation.update(images.shift)/(float)ppi);
 
-        printdiagnostics(dev);
+        //printdiagnostics(dev);
 
         varySpeed(speed.update(images.travel));
 
