@@ -6,7 +6,7 @@ After=multi-user.target
 Type=idle
 User=pi
 WorkingDirectory=/home/pi/Desktop/ACS
-ExecStart=sudo /home/pi/Desktop/ACS/build/ACS 0 00000000
+ExecStart=sudo /home/pi/Desktop/ACS/build/ACS nnn sss
 Restart=always
 RestartSec=10s
 

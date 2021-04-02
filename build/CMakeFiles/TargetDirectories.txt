@@ -1,3 +1,0 @@
-/home/pi/Desktop/ACS/build/CMakeFiles/rebuild_cache.dir
-/home/pi/Desktop/ACS/build/CMakeFiles/ACS.dir
-/home/pi/Desktop/ACS/build/CMakeFiles/edit_cache.dir
