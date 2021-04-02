@@ -63,6 +63,7 @@ struct RollingAverage{
     int head = 0;
     int base = 0;
     float avg = 0;
+    int start_count = 0;
 
     void reset(){
         for (int i = 0; i < base; i++){
@@ -70,6 +71,9 @@ struct RollingAverage{
         }
     }
     float update(int sample){
+        if (start_count <= base)
+            start_count++;
+
         samples[head] = sample;
 
         head = (head+1)%base;
@@ -83,6 +87,10 @@ struct RollingAverage{
         average = average / (float)base;
         avg = average;
         return average;
+    }
+
+    bool pause(){
+        return (start_count <= base);
     }
 };
 
@@ -98,6 +106,7 @@ struct Images{
     int shift;
     int travel;
     int p_travel;
+    int frame_gap;
 };
 
 bool getMovement(Images *local_set);

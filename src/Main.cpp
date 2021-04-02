@@ -1,6 +1,7 @@
 #include "Main.hpp"
 #include "ModbusInterface.hpp"
 #include "CameraInterface.hpp"
+#include "ModbusServer.hpp"
 
 void printdiagnostics(float dev){
     std::bitset<16> servo_status_word_1(_3x[44]);
@@ -25,73 +26,68 @@ void programLoop(){
     loop_duration.reset();
     loop_duration.base = 10;
 
+    Tags local_set;
+    std::thread tag_server(tagServer);
+
+    bool toggle = false;
     while (true){
         begin_time = std::chrono::system_clock::now(); 
         if (get_new_image(camera_pointer, mset.module_number))
             continue;
-        
-
         modbus_read_input_registers(ctx_servo, 0, 82, _3x);
 
-        if (checkSwitch()){
+        if (switchRisingEdge()){
             newPattern();
             deviation.reset();
         }
         
         getMovement(&images);
         float dev = ((float)deviation.update(images.shift)/(float)ppi);
+        local_set.deviation = dev;
 
         //printdiagnostics(dev);
 
-        varySpeed(speed.update(images.travel));
+        float spd_fc = varySpeed(speed.update(images.travel), images.frame_gap);
+        local_set.speed = spd_fc;
+        std::cout << spd_fc << std::endl;
+        local_set.underspeed = (spd_fc < 0.25);
 
-        std::chrono::milliseconds dwell_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-time_since_move);
-        if (dwell_time.count() > 30 && dwell_time.count() < 90){
+        if (!toggle){
             setBit(_4x, 1, 3, 0); // set start move to low
-            modbus_write_registers(ctx_servo, 0, 54, _4x);
         }
-        else if (dwell_time.count() >= 100){
-            time_since_move = std::chrono::system_clock::now(); 
-
+        else if (toggle){
             if (abs(dev)> 0.03 && status && getBit(_3x, 45, 3)){
                 setBit(_4x, 1, 3, 1); // set start move to high
             }
-
             //***********************************************************************************//
             float servo_position_command = toFloat(_3x[49], _3x[48]) + (dev);                    // actual control
+            toUint(_4x, 37, servo_position_command);                                             //
             //***********************************************************************************//
-
-            toUint(_4x, 37, servo_position_command);
-
-            modbus_read_registers(ctx_switch, 31, 1, &limit_switches);
-            std::bitset<16> stride_word(limit_switches);
-            prev_status = status;
-            status = stride_word[mset.module_number-1];
-
-            /*
-            std::bitset<16> hmi_word(hmi[0]);
-            hmi_word[0] = 1;
-            hmi_word[1] = status;
-            hmi_word[14] = hmi_word[15];
-            hmi_word[15] = !hmi_word[15];
-            hmi[0] = hmi_word.to_ulong();
-            hmi[1] = abs((dev+10)*100);
-            modbus_write_registers(ctx_hmi, 2*(mset.module_number-1), 2, hmi );
-            */
-            
-            setBit(_4x, 3, 0, getBit(_3x, 45, 0)); // heartbeat
-            modbus_write_registers(ctx_servo, 0, 54, _4x);
+            checkSwitch(mset);
         }
+        toggle = !toggle;
+
+        setBit(_4x, 3, 0, getBit(_3x, 45, 0)); // heartbeat
+        modbus_write_registers(ctx_servo, 0, 54, _4x);
+
+        local_set.status = 1;
+        local_set.cam_status = 1;
+        local_set.drive_status = 1;
+        setTags(local_set);
 
         end_time = std::chrono::system_clock::now();
         float c_duration = loop_duration.update(std::chrono::duration_cast<std::chrono::milliseconds>(end_time-begin_time).count());
         //std::cout << c_duration << std::endl;
 
-        if (c_duration > 150){
+        if (c_duration > 150 && !loop_duration.pause()){
             std::cout << "loop too slow, restarting" << std::endl;
             break;
         }
     }
+
+    local_set.shutdown = true;
+    setTags(local_set);
+    tag_server.join();
 }
 
 int main(int argc, char **argv){
@@ -129,7 +125,7 @@ int main(int argc, char **argv){
         std::cout << "servo configured successfully" << std::endl;
     }
 
-    speed.base = 6;
+    speed.base = 3;
     deviation.base = 14;
 
     programLoop();

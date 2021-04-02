@@ -14,7 +14,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../include"
   "/usr/include/spinnaker"
   "/usr/local/include/opencv4"
-  "/usr/include/modbus"
+  "/usr/local/include/modbus"
   )
 
 # Targets to which this target links.

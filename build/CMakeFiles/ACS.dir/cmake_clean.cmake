@@ -1,8 +1,8 @@
 file(REMOVE_RECURSE
+  "ACS"
+  "ACS.pdb"
   "CMakeFiles/ACS.dir/src/Main.cpp.o"
   "CMakeFiles/ACS.dir/src/VisionAlgorithm.cpp.o"
-  "ACS.pdb"
-  "ACS"
 )
 
 # Per-language clean rules from dependency scanning.

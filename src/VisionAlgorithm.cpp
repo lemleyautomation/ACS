@@ -63,7 +63,8 @@ bool getMovement(Images *local_set){
     std::chrono::time_point<std::chrono::system_clock> end_comp;
 
     std::chrono::milliseconds dF = std::chrono::duration_cast<std::chrono::milliseconds>(local_set->c_stamp-local_set->p_stamp);
-    
+    local_set->frame_gap = dF.count();
+
     start_comp = std::chrono::system_clock::now();
     ///////////////////////////////////////////////////////////////////////////////////////
     if (loaded && dF.count() <=300){
@@ -77,6 +78,6 @@ bool getMovement(Images *local_set){
     end_comp = std::chrono::system_clock::now();
     std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
 
-    //std::cout << " dF: " << dF.count() << " dV: " << dV.count() << " ";
+    //std::cout << " dF: " << dF.count() << " dV: " << dV.count() << " " << std::endl;
     return success;
 }

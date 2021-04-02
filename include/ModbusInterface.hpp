@@ -2,7 +2,6 @@ std::chrono::time_point<std::chrono::system_clock> time_since_move, begin_time, 
 
 modbus_t *ctx_switch;
 modbus_t *ctx_servo;
-modbus_t *ctx_hmi;
 
 uint16_t limit_switches;
 bool status;
@@ -10,9 +9,6 @@ bool prev_status;
 
 uint16_t _3x[128];
 uint16_t _4x[128];
-
-uint16_t hmi[3];
-
 
 static float toFloat(uint16_t upper_word, uint16_t lower_word){
     int32_t pl = ((uint32_t)upper_word << 16) + (uint16_t)lower_word;
@@ -39,14 +35,6 @@ static bool getBit(uint16_t* array, int reg, int bit){
 }
 
 int startModbusInterfaces(moduleSettings mset){
-    /*
-    ctx_hmi = modbus_new_tcp("192.168.1.45", 502);
-    if (modbus_connect(ctx_hmi) != 0){
-        std::cout << "hmi connection failure" << std::endl;
-        return -1;
-    }
-    */
-    
     ctx_switch = modbus_new_tcp("192.168.1.100", 502);
     if ( modbus_connect(ctx_switch) != 0){
         std::cout << "limit switch connection failure" << std::endl;
@@ -62,13 +50,6 @@ int startModbusInterfaces(moduleSettings mset){
     return 0;
 }
 void stopModbus(moduleSettings mset){
-    /*
-    hmi[0] = 0;
-    modbus_write_registers(ctx_hmi,  2*(mset.module_number-1), 2, hmi );
-    modbus_close(ctx_hmi);
-    modbus_free(ctx_hmi);
-    */
-
     modbus_close(ctx_servo);
     modbus_free(ctx_servo);
     
@@ -113,17 +94,22 @@ int configure_servo(){
     return x[0] + x[1] + x[2] + x[3];
 }
 
-void varySpeed(float speed_factor){
-    speed_factor = abs(speed_factor / 500);
+float varySpeed(float travel, int frame_gap){
+    float speed_factor = ((((float)travel/(float)ppi)/((float)frame_gap*0.001))*5)/200;
+    //std::cout.precision(2);
+    //std::cout << std::fixed;
+    //std::cout << abs(speed_factor) << std::endl;
     float acceleration = 40.0*speed_factor;
     float deceleration = 40.0*speed_factor;
-    float servo_speed  = 2.0;
+    float servo_speed  =  2.0*speed_factor;
     toUint(_4x, 21, acceleration); // accel
     toUint(_4x, 25, deceleration); // decel
     toUint(_4x, 29,  servo_speed); // speed
+
+    return speed_factor;
 }
 
-bool checkSwitch(){
+bool switchRisingEdge(){
     if (status != prev_status && status == true){
         setBit(_4x, 1, 0, 1); // enable servo
         return true;
@@ -133,4 +119,11 @@ bool checkSwitch(){
     }
 
     return false;
+}
+
+void checkSwitch(moduleSettings mset){
+    modbus_read_registers(ctx_switch, 31, 1, &limit_switches);
+    std::bitset<16> stride_word(limit_switches);
+    prev_status = status;
+    status = stride_word[mset.module_number-1];
 }

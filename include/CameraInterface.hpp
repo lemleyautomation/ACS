@@ -86,7 +86,7 @@ int startCamera(moduleSettings mset){
     ptrAcquisitionMode->SetIntValue(ptrAcquisitionModeContinuous->GetValue());
     camera_pointer->BeginAcquisition();
     
-    camera_pointer->AcquisitionFrameRate.SetValue(32); //34.995
+    camera_pointer->AcquisitionFrameRate.SetValue(20); //34.995
     
     std::cout << "acquiring" << std::endl;
 
