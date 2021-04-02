@@ -49,7 +49,6 @@ void programLoop(){
 
         float spd_fc = varySpeed(speed.update(images.travel), images.frame_gap);
         local_set.speed = spd_fc;
-        std::cout << spd_fc << std::endl;
         local_set.underspeed = (spd_fc < 0.25);
 
         if (!toggle){
