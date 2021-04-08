@@ -29,11 +29,18 @@ void programLoop(){
     Tags local_set;
     std::thread tag_server(tagServer);
 
-    bool toggle = false;
+    std::cout << "hello\n";
+
+    //bool toggle = false;
+    int toggle = 0;
     while (true){
         begin_time = std::chrono::system_clock::now(); 
-        if (get_new_image(camera_pointer, mset.module_number))
+        int image_error = get_new_image(camera_pointer, mset.module_number);
+        if (image_error == -1005 || image_error == -1002)
+            break;
+        else if (image_error)
             continue;
+        
         modbus_read_input_registers(ctx_servo, 0, 82, _3x);
 
         if (switchRisingEdge()){
@@ -54,7 +61,7 @@ void programLoop(){
         if (!toggle){
             setBit(_4x, 1, 3, 0); // set start move to low
         }
-        else if (toggle){
+        else if (toggle ==  3){
             if (abs(dev)> 0.03 && status && getBit(_3x, 45, 3)){
                 setBit(_4x, 1, 3, 1); // set start move to high
             }
@@ -64,7 +71,7 @@ void programLoop(){
             //***********************************************************************************//
             checkSwitch(mset);
         }
-        toggle = !toggle;
+        toggle = (toggle+1)%4;
 
         setBit(_4x, 3, 0, getBit(_3x, 45, 0)); // heartbeat
         modbus_write_registers(ctx_servo, 0, 54, _4x);
@@ -125,7 +132,7 @@ int main(int argc, char **argv){
     }
 
     speed.base = 3;
-    deviation.base = 14;
+    deviation.base = 8;
 
     programLoop();
 

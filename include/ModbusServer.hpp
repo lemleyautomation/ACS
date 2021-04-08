@@ -46,6 +46,9 @@ bool updateRegisters(){
 }
 
 void tagServer(){
+    std::chrono::time_point<std::chrono::system_clock> start_comp;
+    std::chrono::time_point<std::chrono::system_clock> end_comp;
+
     // create new Modbus communications context
     modbus_t *context = modbus_new_tcp(NULL, 512);
     // create registers. Only the 4x registers are used
@@ -53,6 +56,7 @@ void tagServer(){
     // begin listening for any income modbus communication
     int socket_id = modbus_tcp_listen(context, 1);
     while (true){
+        start_comp = std::chrono::system_clock::now();
         // accept any communications request
         modbus_tcp_accept(context, &socket_id);
         // variable named 'query' that stores the incomiing request
@@ -68,6 +72,9 @@ void tagServer(){
             if (updateRegisters())
                 break;
         }
+        end_comp = std::chrono::system_clock::now();
+        std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
+        //std::cout << dV.count() << std::endl;
     }
     // print reason for coms shutdown to console
     printf("tag server shutdown: %s\n", modbus_strerror(errno));

@@ -49,7 +49,7 @@ int get_new_image (CameraPtr pCam, int module){
     catch (Spinnaker::Exception& e)
     {
         std::cout << "Error: " << e.what() << std::endl;
-        return 1;
+        return e.GetError();
     }
 
     return 0;
@@ -86,7 +86,7 @@ int startCamera(moduleSettings mset){
     ptrAcquisitionMode->SetIntValue(ptrAcquisitionModeContinuous->GetValue());
     camera_pointer->BeginAcquisition();
     
-    camera_pointer->AcquisitionFrameRate.SetValue(20); //34.995
+    camera_pointer->AcquisitionFrameRate.SetValue(30); //34.995
     
     std::cout << "acquiring" << std::endl;
 

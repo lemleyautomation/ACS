@@ -99,8 +99,8 @@ float varySpeed(float travel, int frame_gap){
     //std::cout.precision(2);
     //std::cout << std::fixed;
     //std::cout << abs(speed_factor) << std::endl;
-    float acceleration = 40.0*speed_factor;
-    float deceleration = 40.0*speed_factor;
+    float acceleration = 4.0*speed_factor;
+    float deceleration = 4.0*speed_factor;
     float servo_speed  =  2.0*speed_factor;
     toUint(_4x, 21, acceleration); // accel
     toUint(_4x, 25, deceleration); // decel
