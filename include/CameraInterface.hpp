@@ -48,7 +48,7 @@ int get_new_image (CameraPtr pCam, int module){
     }
     catch (Spinnaker::Exception& e)
     {
-        std::cout << "Error: " << e.what() << std::endl;
+        //std::cout << "Error: " << e.what() << std::endl;
         return e.GetError();
     }
 

@@ -74,7 +74,7 @@ void tagServer(){
         }
         end_comp = std::chrono::system_clock::now();
         std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
-        //std::cout << dV.count() << std::endl;
+        //std::cout << "\t\t crimson ping: " << dV.count() << std::endl;
     }
     // print reason for coms shutdown to console
     printf("tag server shutdown: %s\n", modbus_strerror(errno));
