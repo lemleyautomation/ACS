@@ -3,10 +3,10 @@
 #include "CameraInterface.hpp"
 #include "ModbusServer.hpp"
 
-#define ASIO_STANDALONE
-#include <asio.hpp>
-#include <asio/ts/buffer.hpp>
-#include <asio/ts/internet.hpp>
+//#define ASIO_STANDALONE
+//#include <asio.hpp>
+//#include <asio/ts/buffer.hpp>
+//#include <asio/ts/internet.hpp>
 
 void printdiagnostics(float dev){
     std::bitset<16> servo_status_word_1(_3x[44]);
