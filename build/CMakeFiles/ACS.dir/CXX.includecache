@@ -69,12 +69,6 @@ CameraInterface.hpp
 /home/pi/Desktop/ACS/src/CameraInterface.hpp
 ModbusServer.hpp
 /home/pi/Desktop/ACS/src/ModbusServer.hpp
-asio.hpp
--
-asio/ts/buffer.hpp
--
-asio/ts/internet.hpp
--
 
 /usr/local/include/modbus/modbus-rtu.h
 modbus.h

@@ -31,12 +31,8 @@ void programLoop(){
     loop_duration.reset();
     loop_duration.base = 10;
 
-    std::cout << "starting tag server...";
-
     Tags local_set;
     std::thread tag_server(tagServer);
-
-    std::cout << "started\n";
 
     //bool toggle = false;
     int toggle = 0;
@@ -44,9 +40,13 @@ void programLoop(){
         begin_time = std::chrono::system_clock::now(); 
         local_set.cam_status = 1;
         int image_error = get_new_image(camera_pointer, mset.module_number);
-        //if (image_error == -1005 || image_error == -1002 || image_error == -1012 || image_error == -1010)
-        //   break;
-        if (image_error){
+        if (image_error == -1005 || image_error == -1002 || image_error == -1012 || image_error == -1010){
+            local_set.cam_status = 0;
+            std::cout << "restarting camera" << std::endl;
+            stopCamera();
+            startCamera(mset);
+        }
+        else if (image_error){
             local_set.cam_status = 0;
             std::cout << image_error << std::endl;
             continue;
