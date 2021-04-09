@@ -42,9 +42,8 @@ void programLoop(){
         int image_error = get_new_image(camera_pointer, mset.module_number);
         if (image_error == -1005 || image_error == -1002 || image_error == -1012 || image_error == -1010){
             local_set.cam_status = 0;
-            std::cout << "restarting camera" << std::endl;
-            stopCamera();
-            startCamera(mset);
+            std::cout << "camera connection lost, restarting" << std::endl;
+            break;
         }
         else if (image_error){
             local_set.cam_status = 0;
