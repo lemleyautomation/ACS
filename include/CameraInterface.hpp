@@ -1,8 +1,3 @@
-Images images;
-RollingAverage speed;
-RollingAverage deviation;
-moduleSettings mset;
-
 SystemPtr FlirSystem;
 CameraList camera_list;
 CameraPtr camera_pointer;
@@ -13,13 +8,14 @@ void newPattern(){
 }
 
 int get_new_image (CameraPtr pCam, int module){
+    int error = 0;
     try
     {
         ImagePtr convertedImage = pCam->GetNextImage(120);
         if (convertedImage->IsIncomplete())
         {
             //std::cout << "Image incomplete..." << std::endl;
-            return 1;
+            error = 1;
         }
         else{
             unsigned int XPadding = convertedImage->GetXPadding();
@@ -49,7 +45,16 @@ int get_new_image (CameraPtr pCam, int module){
     catch (Spinnaker::Exception& e)
     {
         //std::cout << "Error: " << e.what() << std::endl;
-        return e.GetError();
+        error = e.GetError();
+    }
+
+    if (error == -1005 || error == -1002 || error == -1012 || error == -1010){
+        std::cout << "camera connection lost, restarting" << std::endl;
+        return -1;
+    }
+    else if (error){
+        std::cout << error << std::endl;
+        return 1;
     }
 
     return 0;

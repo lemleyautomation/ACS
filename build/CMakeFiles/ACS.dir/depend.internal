@@ -5,7 +5,8 @@ CMakeFiles/ACS.dir/src/Main.cpp.o
  ../include/CameraInterface.hpp
  ../include/Main.hpp
  ../include/ModbusInterface.hpp
- ../include/ModbusServer.hpp
+ ../include/SocketClient.hpp
+ ../include/SocketServer.hpp
  /home/pi/Desktop/ACS/src/Main.cpp
  /usr/local/include/modbus/modbus-rtu.h
  /usr/local/include/modbus/modbus-tcp.h

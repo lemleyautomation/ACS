@@ -94,11 +94,40 @@ int configure_servo(){
     return x[0] + x[1] + x[2] + x[3];
 }
 
+int toggle = 0;
+void updateServo(){
+    if (!toggle){
+        setBit(_4x, 1, 3, 0); // set start move to low
+    }
+    else if (toggle ==  2){
+        if (abs(tags.deviation) > 0.03 && status == 1 && getBit(_3x, 45, 3)){
+            setBit(_4x, 1, 3, 1); // set start move to high
+        }
+        //***********************************************************************************//
+        float servo_position_command = toFloat(_3x[49], _3x[48]) + (tags.deviation);         // actual control
+        toUint(_4x, 37, servo_position_command);                                             //
+        //***********************************************************************************//
+    
+        sendMessage(tags);
+    }
+    toggle = (toggle+1)%3;
+
+    setBit(_4x, 3, 0, getBit(_3x, 45, 0)); // heartbeat
+
+    modbus_write_registers(ctx_servo, 0, 54, _4x);
+}
+
 float varySpeed(float travel, int frame_gap){
+    // travel is measured in pixels of movement from one picture to the next picture
+    // ppi = pixels per inch
+    // frame_gap = the number of milliseconds between pictures
+    // 1 millisecond = *0.001 seconds
+    // 1 foot per minute = 5 inches per second
+    // 200 feet per minute is the assumed maximum speed of the rollup
+    // this way, speed_factor is always between 0 and 1. a percentage %
     float speed_factor = ((((float)travel/(float)ppi)/((float)frame_gap*0.001))*5)/200;
-    //std::cout.precision(2);
-    //std::cout << std::fixed;
-    //std::cout << abs(speed_factor) << std::endl;
+    //speed_factor = 1; // FOR TESTING PURPOSES
+    // based on trial and erro, the acce/decel at 200 feet per minute should be 4 inches / second / second
     float acceleration = 4.0*speed_factor;
     float deceleration = 4.0*speed_factor;
     float servo_speed  =  2.0*speed_factor;
@@ -109,21 +138,20 @@ float varySpeed(float travel, int frame_gap){
     return speed_factor;
 }
 
-bool switchRisingEdge(){
-    if (status != prev_status && status == true){
-        setBit(_4x, 1, 0, 1); // enable servo
-        return true;
-    }
-    else if (status == false){
-        setBit(_4x, 1, 0, 0); // disable servo
-    }
-
-    return false;
-}
-
 void checkSwitch(moduleSettings mset){
+    // read the limit switch register
     modbus_read_registers(ctx_switch, 31, 1, &limit_switches);
+    // break the register word into individual bits
     std::bitset<16> stride_word(limit_switches);
+    // this allow us to check for the moment the switch is made
     prev_status = status;
+    // set the module status based on the proper bit
     status = stride_word[mset.module_number-1];
+    setBit(_4x, 1, 0, status);
+    // if the switch has just been made, then this statement is true
+    if (status != prev_status && status == true){
+        setBit(_4x, 1, 0, 1);           // enable servo
+        newPattern();                   // acquire and new pattern image
+        images.shift_average.reset();   // reset the rolling average for deviation to 0
+    }
 }

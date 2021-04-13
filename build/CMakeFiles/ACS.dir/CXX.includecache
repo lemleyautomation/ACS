@@ -58,17 +58,29 @@ modbus.h
 
 ../include/ModbusInterface.hpp
 
-../include/ModbusServer.hpp
+../include/SocketClient.hpp
+sys/types.h
+-
+sys/socket.h
+-
+arpa/inet.h
+-
+netinet/in.h
+-
+
+../include/SocketServer.hpp
 
 /home/pi/Desktop/ACS/src/Main.cpp
 Main.hpp
 /home/pi/Desktop/ACS/src/Main.hpp
-ModbusInterface.hpp
-/home/pi/Desktop/ACS/src/ModbusInterface.hpp
+SocketClient.hpp
+/home/pi/Desktop/ACS/src/SocketClient.hpp
 CameraInterface.hpp
 /home/pi/Desktop/ACS/src/CameraInterface.hpp
-ModbusServer.hpp
-/home/pi/Desktop/ACS/src/ModbusServer.hpp
+ModbusInterface.hpp
+/home/pi/Desktop/ACS/src/ModbusInterface.hpp
+SocketServer.hpp
+/home/pi/Desktop/ACS/src/SocketServer.hpp
 
 /usr/local/include/modbus/modbus-rtu.h
 modbus.h

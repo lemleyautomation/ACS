@@ -46,16 +46,6 @@ struct moduleSettings{
                                 "192.168.1.38",
                                 "192.168.1.39"};
     std::string serial_number;
-
-    int setModule(){
-        std::ifstream infile("number.txt");
-        int number = 0;
-        infile >> number;
-        infile.close();
-        if (number != 0)
-            module_number = number;
-        return module_number;
-    }
 };
 
 struct RollingAverage{
@@ -89,7 +79,7 @@ struct RollingAverage{
         return average;
     }
 
-    bool pause(){
+    bool startup(){
         return (start_count <= base);
     }
 };
@@ -104,9 +94,22 @@ struct Images{
     cv::Mat c1, c2, c3;
 
     int shift;
+    RollingAverage shift_average;
     int travel;
+    RollingAverage travel_average;
     int p_travel;
     int frame_gap;
+};
+
+struct Tags{
+    float deviation;
+    float speed;
+    bool underspeed = true;
+    bool status = false;
+    bool cam_status = false;
+    bool drive_status = false;
+    bool shutdown = false;
+    unsigned int module_number;
 };
 
 bool getMovement(Images *local_set);
