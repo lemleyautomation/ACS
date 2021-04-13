@@ -34,6 +34,7 @@ void sendMessage(Tags tags){
 	bits[0] = tags.status;
 	bits[1] = tags.cam_status;
 	bits[2] = tags.drive_status;
+	bits[3] = tags.underspeed;
 	status = bits.to_ulong();
 
 	char hello[] = { 'B', (char)tags.module_number, deviation, speed, status, 'E' };

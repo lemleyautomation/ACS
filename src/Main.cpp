@@ -52,6 +52,7 @@ void programLoop(){
         // update the speed and deviation measurements based on the processed image
         tags.deviation = ((float)images.shift_average.update(images.shift)/(float)ppi);
         tags.speed = varySpeed(images.travel_average.update(images.travel), images.frame_gap);
+        tags.underspeed = (tags.speed < 0.25);
         // update the servo registers based on the speed, devation, and limit switch
         updateServo();
         // print to the console the frame-to-frame measurments register statuses
