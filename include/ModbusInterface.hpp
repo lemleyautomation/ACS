@@ -100,7 +100,7 @@ void updateServo(){
         setBit(_4x, 1, 3, 0); // set start move to low
     }
     else if (toggle ==  2){
-        if (abs(tags.deviation) > 0.03 && status == 1 && getBit(_3x, 45, 3)){
+        if (abs(tags.deviation) > 0.03 && tags.cam_status && status == 1 && getBit(_3x, 45, 3)){
             setBit(_4x, 1, 3, 1); // set start move to high
         }
         //***********************************************************************************//

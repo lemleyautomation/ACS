@@ -36,8 +36,13 @@ void sendMessage(Tags tags){
 	bits[2] = tags.drive_status;
 	bits[3] = tags.underspeed;
 	status = bits.to_ulong();
-
+	
 	char hello[] = { 'B', (char)tags.module_number, deviation, speed, status, 'E' };
 
+	unsigned int len;
+
 	int n = sendto(sockfd, (const char *)hello, 6, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+	char buffer[100];
+	//int x = recvfrom(sockfd, buffer, 3, 0, (struct sockaddr*)NULL, NULL);
+	//std::cout << x << std::endl;
 }
