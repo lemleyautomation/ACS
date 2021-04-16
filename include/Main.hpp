@@ -113,6 +113,7 @@ struct Tags{
 };
 
 bool getMovement(Images *local_set);
+bool getMovement2(Images *local_set);
 #endif
 
 //wut

@@ -64,7 +64,7 @@ void programLoop(){
         // calulate the time for one program scan in milliseonds
         end_time = std::chrono::system_clock::now();
         float loop_duration = stop_watch.update(std::chrono::duration_cast<std::chrono::milliseconds>(end_time-begin_time).count());
-        //std::cout << loop_duration << std::endl; //  LEAVE THIS COMMENTED OUT UNLESS YOU NEED IT. SEE ABOVE ^
+        std::cout << loop_duration << std::endl; //  LEAVE THIS COMMENTED OUT UNLESS YOU NEED IT. SEE ABOVE ^
         // if the loop is going to slow, this could be caused by communications errors. restarting the programs fixes almost all of these
         if (loop_duration > 150 && !stop_watch.startup()){
             std::cout << "loop too slow, restarting" << std::endl;

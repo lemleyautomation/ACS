@@ -14,7 +14,7 @@ int get_new_image (CameraPtr pCam, int module){
         ImagePtr convertedImage = pCam->GetNextImage(120);
         if (convertedImage->IsIncomplete())
         {
-            //std::cout << "Image incomplete..." << std::endl;
+            std::cout << "Image incomplete..." << std::endl;
             error = 1;
         }
         else{
@@ -44,7 +44,7 @@ int get_new_image (CameraPtr pCam, int module){
     }
     catch (Spinnaker::Exception& e)
     {
-        //std::cout << "Error: " << e.what() << std::endl;
+        std::cout << "Error: " << e.what() << std::endl;
         error = e.GetError();
     }
 
@@ -53,7 +53,7 @@ int get_new_image (CameraPtr pCam, int module){
         return -1;
     }
     else if (error){
-        std::cout << error << std::endl;
+        //std::cout << error << std::endl;
         return 1;
     }
 
