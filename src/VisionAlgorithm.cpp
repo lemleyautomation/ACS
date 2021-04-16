@@ -96,11 +96,18 @@ bool computeMovement2(Images *images){
 
     int shift = (abs(loc_min.y - loc_max.y)/2)+loc_max.y;
 
+    float confidence = abs(val_max-val_min);
+
+    float dV = 1e+07;
+
+    //std::cout << shift << "\t" << confidence << std::endl;
+
     shift = shift - 128;
 
-    images->shift = shift*4;
+    if (confidence < dV)
+        shift = 0;
 
-    //std::cout << val_min << "\t" << val_max << "\t" << loc_min.y << "\t" << loc_max.y << std::endl;
+    images->shift = shift*4;
 
     return false;
 }
@@ -154,6 +161,6 @@ bool getMovement2(Images *local_set){
     end_comp = std::chrono::system_clock::now();
     std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
 
-    std::cout << " dF: " << dF.count() << " dC: " << dV.count() << " " << std::endl;
+    //std::cout << " dF: " << dF.count() << " dC: " << dV.count() << " " << std::endl;
     return success;
 }
