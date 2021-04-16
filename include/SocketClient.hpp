@@ -27,7 +27,7 @@ void stopMessaging(){
 
 void sendMessage(Tags tags){
 
-	uint8_t deviation = tags.deviation*100;
+	uint8_t deviation = abs(tags.deviation*100);
 	uint8_t speed = tags.speed*100;
 	uint8_t status = 0;
 	std::bitset<8> bits(status);
@@ -35,6 +35,7 @@ void sendMessage(Tags tags){
 	bits[1] = tags.cam_status;
 	bits[2] = tags.drive_status;
 	bits[3] = tags.underspeed;
+	bits[4] = (tags.deviation<0);
 	status = bits.to_ulong();
 	
 	char hello[] = { 'B', (char)tags.module_number, deviation, speed, status, 'E' };

@@ -94,6 +94,7 @@ struct Images{
     cv::Mat c1, c2, c3;
 
     int shift;
+    int shift_fallback;
     RollingAverage shift_average;
     int travel;
     RollingAverage travel_average;

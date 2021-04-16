@@ -94,18 +94,16 @@ bool computeMovement2(Images *images){
 
     cv::minMaxLoc(sums, &val_min, &val_max, &loc_min, &loc_max);
 
-    int shift = (abs(loc_min.y - loc_max.y)/2)+loc_max.y;
+    int shift = -(((abs(loc_min.y - loc_max.y)/2)+loc_max.y)-115);
 
     float confidence = abs(val_max-val_min);
 
-    float dV = 1e+07;
-
-    //std::cout << shift << "\t" << confidence << std::endl;
-
-    shift = shift - 128;
-
+    float dV = 1e+06;
+    
     if (confidence < dV)
-        shift = 0;
+        shift = images->shift_fallback;
+    else
+        images->shift_fallback = shift;
 
     images->shift = shift*4;
 
