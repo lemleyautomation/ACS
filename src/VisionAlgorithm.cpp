@@ -155,5 +155,5 @@ void getMovement(Images *local_set){
     end_comp = std::chrono::system_clock::now();
 
     std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
-    std::cout << " dF: " << dF.count() << " dV: " << dV.count() << " " << std::endl;
+    //std::cout << " dF: " << dF.count() << " dV: " << dV.count() << " " << std::endl;
 }
