@@ -51,7 +51,7 @@ void programLoop(){
         // if the camera has a non-fatal error, the 'continue' statement skips all the code and starts the loop again.
         if (!image_error){
             // process the picture through the vision algorithm
-            getMovement2(&images);
+            getMovement(&images);
             // update the speed and deviation measurements based on the processed image
             tags.deviation = ((float)images.shift_average.update(images.shift)/(float)ppi);
             tags.speed = varySpeed(images.travel_average.update(images.travel), images.frame_gap);

@@ -91,15 +91,16 @@ struct Images{
     std::chrono::time_point<std::chrono::system_clock> c_stamp;
     std::chrono::time_point<std::chrono::system_clock> p_stamp;
 
-    cv::Mat c1, c2, c3;
-
     int shift;
     int shift_fallback;
     RollingAverage shift_average;
+
     int travel;
     RollingAverage travel_average;
-    int p_travel;
+
     int frame_gap;
+
+    int program = 1;
 };
 
 struct Tags{
@@ -113,8 +114,7 @@ struct Tags{
     unsigned int module_number;
 };
 
-bool getMovement(Images *local_set);
-bool getMovement2(Images *local_set);
+void getMovement(Images *local_set);
 #endif
 
 //wut
