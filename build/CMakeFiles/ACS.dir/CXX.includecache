@@ -82,10 +82,6 @@ ModbusInterface.hpp
 SocketServer.hpp
 /home/pi/Desktop/ACS/src/SocketServer.hpp
 
-/home/pi/Desktop/ACS/src/VisionAlgorithm.cpp
-Main.hpp
-/home/pi/Desktop/ACS/src/Main.hpp
-
 /usr/local/include/modbus/modbus-rtu.h
 modbus.h
 /usr/local/include/modbus/modbus.h

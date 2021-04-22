@@ -3,33 +3,34 @@
 void computeSpeed(Images *images){
     
     cv::Mat image, templat, heat_map;
-    float scale_factor = 0.5;           // (320 X 156) -> (160 X 78)
+    float scale_factor = 0.5;           // (320 X 256) -> (160 X 78)
     int m_x = 6;
-    int m_y = 8;
+    int m_y = 6;
     int d_x = 4;
-    int d_y = 140;
-    int margin_y = 40;
+    int d_y = 130;
+    int margin_y = 60;
+    int margin_x = 40;
 
     cv::Rect i_roi(0, margin_y,images->current_image.cols,images->current_image.rows-(margin_y*2));
     cv::Rect p_roi(m_x,m_y,d_x,d_y);
     
     cv::resize( images->current_image(i_roi),
-                image,
+                image, // 160cols X 88rows
                 cv::Size(),
                 scale_factor, scale_factor );
     
-    cv::resize( images->previous_image(p_roi),
-                templat,
+    cv::resize( (images->previous_image(i_roi))(p_roi),
+                templat, // 2cols X 70rows
                 cv::Size(),
                 scale_factor, scale_factor );
-
+    
     cv::matchTemplate(image, templat, heat_map, cv::TM_CCOEFF_NORMED);
     
     double val_min, val_max;
     cv::Point loc_min, loc_max;
     
     cv::minMaxLoc(heat_map, &val_min, &val_max, &loc_min, &loc_max);
-    
+
     int travel = (loc_max.x/scale_factor) - m_x;
     images->travel = travel*4;
 }
@@ -42,6 +43,7 @@ void computeMovement(Images *images){
     int margin_y = 40;
     
     computeSpeed(images);
+    
     cv::Mat image, templat, heat_map;
     float scale_factor = 0.5;
 
@@ -133,7 +135,6 @@ void computeMovement2(Images *images){
 }
 
 bool loaded = false;
-
 void getMovement(Images *local_set){
     std::chrono::time_point<std::chrono::system_clock> start_comp, end_comp;
 
