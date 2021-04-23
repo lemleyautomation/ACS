@@ -9,7 +9,7 @@ int coffset [] = {
     94,
     132,
     115,
-    93,
+    106,
     158
 };
 
@@ -51,7 +51,7 @@ void computeSpeed(Images *images){
 void computeMovement(Images *images){
     int window_size = 40;
     int margin_x = 0;
-    int margin_y = 40;
+    int margin_y = 0;
     
     computeSpeed(images);
 
@@ -63,7 +63,7 @@ void computeMovement(Images *images){
     int corner = ((images->pattern_image.rows-window_size)/2)+center_cam;
     // roi = Region of Interest. Shaves off edges to improve time.
     cv::Rect i_roi( margin_x, 
-                    margin_y+center_cam,
+                    margin_y,
                     images->current_image.cols-(margin_x*2),
                     images->current_image.rows-(margin_y*2)
                     );
@@ -102,6 +102,8 @@ void computeMovement(Images *images){
     cv::minMaxLoc(heat_map, &val_min, &val_max, &loc_min, &loc_max);
     int shift = loc_max.y - corner;
 
+    //std::cout << shift << std::endl;
+
     images->shift = shift * 4;
     
 }
@@ -109,15 +111,16 @@ void computeMovement(Images *images){
 float oneDaverage(cv::Mat *vector){
     float sum = 0;
     float* beginning_of_row = vector->ptr<float>(0);
-    for(int i = 0; i < vector->cols; i++)
-        sum += beginning_of_row[i];
-    return sum / vector->cols;
+    for(int i = 0; i < vector->rows; i++){
+        sum += (int)beginning_of_row[i];
+    }
+    sum = sum / vector->rows;
+    //std::cout << sum << "\t" << vector->rows << "\t";
+    return sum;
 }
 
-bool oneDthresh(cv::Mat *vector, float bound){
+bool oneDthresh(cv::Mat *vector, float average, float bound){
     
-    float average = oneDaverage(vector);
-
     float upper_average = 0;
     float lower_average = 0;;
 
@@ -126,10 +129,12 @@ bool oneDthresh(cv::Mat *vector, float bound){
         upper_average += beginning_of_row[i]*(beginning_of_row[i]>average);
         lower_average += beginning_of_row[i]*(beginning_of_row[i]<average);
     }
-    upper_average /= vector->cols;
-    lower_average /= vector->cols;
+    upper_average /= (float)vector->cols;
+    lower_average /= (float)vector->cols;
 
     float noise_band = abs(upper_average - lower_average);
+
+    //std::cout << "\t" << average << "\t";
 
     return (noise_band > bound);
 }
@@ -151,16 +156,22 @@ void computeMovement2(Images *images){
 
     cv::normalize(sums, sums, 1, -1, cv::NORM_MINMAX);
 
-    bool confidence = oneDthresh(&sums, 0.60);
-    
     double val_min, val_max;
     cv::Point loc_min, loc_max;
 
     cv::minMaxLoc(sums, &val_min, &val_max, &loc_min, &loc_max);
 
+    cv::Mat av;
+    cv::reduce(sums, av, 0, cv::REDUCE_SUM);
+    float average = av.at<double>(0,0);
+
+    bool confidence = oneDthresh(&sums, average, 0.60);
+    
     int shift = -(((abs(loc_min.y - loc_max.y)/2)+loc_max.y)-(128+offset));
 
-    if (confidence)
+    //std::cout << "\t" << val_min << "\t" << val_max << std::endl;
+
+    if (confidence || !confidence)
         images->shift_fallback = shift;
     else
         shift = images->shift_fallback;
