@@ -101,6 +101,7 @@ struct Images{
     int frame_gap;
 
     int program = 1;
+    int module_number = 0;
 };
 
 struct Tags{

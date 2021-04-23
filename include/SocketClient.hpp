@@ -20,6 +20,13 @@ void startMessaging(){
 	servaddr.sin_addr.s_addr = inet_addr("192.168.1.21");
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(PORT);
+
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 3000;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+		perror("Error");
+	}
 }
 void stopMessaging(){
 	close(sockfd);
@@ -43,4 +50,16 @@ void sendMessage(Tags tags){
 	unsigned int len;
 
 	int n = sendto(sockfd, (const char *)hello, 6, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+	
+	char buffer[100];
+	int r = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
+
+	if (r != 3){
+		//std::cout << "receive timeout, sent: " << n << std::endl;
+		images.program = 1;
+	}
+	else
+		images.program = (int)buffer[1];
+
+	//std::cout << "selected program: " << (int)buffer[1] << "\t";// << std::endl;
 }

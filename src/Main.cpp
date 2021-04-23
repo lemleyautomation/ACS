@@ -29,6 +29,7 @@ void printdiagnostics(){
 
 void programLoop(){
     // a variable that allows us to measure the length of one program scan.
+    std::chrono::time_point<std::chrono::system_clock> initial_time = std::chrono::system_clock::now();
     RollingAverage stop_watch;
     stop_watch.reset();
     stop_watch.base = 10;
@@ -67,8 +68,13 @@ void programLoop(){
         //std::cout << loop_duration << std::endl; //  LEAVE THIS COMMENTED OUT UNLESS YOU NEED IT. SEE ABOVE ^
         // if the loop is going to slow, this could be caused by communications errors. restarting the programs fixes almost all of these
         if (loop_duration > 150 && !stop_watch.startup()){
-            std::cout << "loop too slow, restarting" << std::endl;
-            break;
+            std::cout << "loop too slow...";
+            int program_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-initial_time).count();
+            if (program_duration > 10000){
+                std::cout << "restarting." << std::endl;
+                break;
+            }
+            std::cout << std::endl;
         }
     }
 }
@@ -78,6 +84,7 @@ int main(int argc, char **argv){
         mset.serial_number = argv[2];
         mset.module_number = std::stoi(argv[1]);
         tags.module_number = std::stoi(argv[1]);
+        images.module_number = std::stoi(argv[1]);
         std::cout << "Camera Serial Number: " << mset.serial_number << std::endl;
         std::cout << "Module Number: " << mset.module_number << std::endl;
     }

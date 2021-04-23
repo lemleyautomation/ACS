@@ -1,5 +1,18 @@
 #include "Main.hpp"
 
+int coffset [] = {
+    0,
+    128,
+    150,
+    135,
+    115,
+    94,
+    132,
+    115,
+    93,
+    158
+};
+
 void computeSpeed(Images *images){
     
     cv::Mat image, templat, heat_map;
@@ -36,22 +49,41 @@ void computeSpeed(Images *images){
 }
 
 void computeMovement(Images *images){
-
-    int offset = 0;
     int window_size = 40;
     int margin_x = 0;
     int margin_y = 40;
     
     computeSpeed(images);
+
+    int center_cam = coffset[images->module_number] - (images->current_image.rows/2);
     
     cv::Mat image, templat, heat_map;
     float scale_factor = 0.5;
 
-    int corner = ((images->pattern_image.rows-window_size)/2)+offset;
+    int corner = ((images->pattern_image.rows-window_size)/2)+center_cam;
     // roi = Region of Interest. Shaves off edges to improve time.
-    cv::Rect i_roi(margin_x, margin_y,images->current_image.cols-(margin_x*2),images->current_image.rows-(margin_y*2));
-    cv::Rect p_roi(0,corner,images->pattern_image.cols-1,window_size);
-    
+    cv::Rect i_roi( margin_x, 
+                    margin_y+center_cam,
+                    images->current_image.cols-(margin_x*2),
+                    images->current_image.rows-(margin_y*2)
+                    );
+    cv::Rect p_roi( 0,
+                    corner,
+                    images->pattern_image.cols-1,
+                    window_size
+                    );
+    /*
+    std::cout   << images->current_image.rows << "\t"
+                << i_roi.x << "\t"
+                << i_roi.y << "\t"
+                << i_roi.width << "\t"
+                << i_roi.height << "\t\t"
+                << p_roi.x << "\t"
+                << p_roi.y << "\t"
+                << p_roi.width << "\t"
+                << p_roi.height << "\t"
+                << std::endl;
+                */
     cv::resize( images->current_image(i_roi),
                 image,
                 cv::Size(),
@@ -103,6 +135,8 @@ bool oneDthresh(cv::Mat *vector, float bound){
 }
 
 void computeMovement2(Images *images){
+
+    int center_cam = coffset[images->module_number] - images->current_image.rows;
 
     int offset = -13;
 
