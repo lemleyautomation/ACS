@@ -56,7 +56,7 @@ void sendMessage(Tags tags){
 
 	if (r != 3){
 		//std::cout << "receive timeout, sent: " << n << std::endl;
-		images.program = 2;
+		images.program = 1;
 	}
 	else
 		images.program = (int)buffer[1];

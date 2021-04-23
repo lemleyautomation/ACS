@@ -7,9 +7,9 @@ int coffset [] = {
     135,
     115,
     94,
-    132,
-    115,
-    106,
+    119,
+    152,
+    151,
     158
 };
 
@@ -55,12 +55,10 @@ void computeMovement(Images *images){
     
     computeSpeed(images);
 
-    int center_cam = coffset[images->module_number] - (images->current_image.rows/2);
-    
     cv::Mat image, templat, heat_map;
     float scale_factor = 0.5;
 
-    int corner = ((images->pattern_image.rows-window_size)/2)+center_cam;
+    int corner = coffset[images->module_number]-(window_size/2);
     // roi = Region of Interest. Shaves off edges to improve time.
     cv::Rect i_roi( margin_x, 
                     margin_y,
@@ -125,16 +123,16 @@ bool oneDthresh(cv::Mat *vector, float average, float bound){
     float lower_average = 0;;
 
     float* beginning_of_row = vector->ptr<float>(0);
-    for(int i = 0; i < vector->cols; i++){
+    for(int i = 0; i < vector->rows; i++){
         upper_average += beginning_of_row[i]*(beginning_of_row[i]>average);
         lower_average += beginning_of_row[i]*(beginning_of_row[i]<average);
     }
-    upper_average /= (float)vector->cols;
-    lower_average /= (float)vector->cols;
+    upper_average /= (float)vector->rows;
+    lower_average /= (float)vector->rows;
 
     float noise_band = abs(upper_average - lower_average);
 
-    //std::cout << "\t" << average << "\t";
+    //std::cout << "\t" << noise_band << "\t" << std::endl;
 
     return (noise_band > bound);
 }
