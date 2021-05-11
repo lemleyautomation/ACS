@@ -1,7 +1,7 @@
 #include "Main.hpp"
 
 Tags tags;
-Images images;
+Images images, threaded_images;
 moduleSettings mset;
 
 #include "SocketClient.hpp"
@@ -37,10 +37,19 @@ void programLoop(){
     int image_error = 0;
     // all the code inside the while will loop over and over until the camera has a fatal error
     while (image_error >= 0){
-        // start keeping track of how long it takes to do one program scan
-        begin_time = std::chrono::system_clock::now(); 
         // take a picture
         int image_error = get_new_image(camera_pointer, mset.module_number);
+        // start keeping track of how long it takes to do one program scan
+        begin_time = std::chrono::system_clock::now(); 
+        // if the camera has a non-fatal error, the 'continue' statement skips all the code and starts the loop again.
+        if (!image_error){
+            // process the picture through the vision algorithm
+            getMovement(&images);
+            // update the speed and deviation measurements based on the processed image
+            tags.deviation = ((float)images.shift_average.update(images.shift)/(float)ppi);
+            tags.speed = varySpeed(images.travel_average.update(images.travel), images.frame_gap);
+            tags.underspeed = (tags.speed < 0.05);
+        }
         // passes camera error status on to the tag server
         tags.cam_status = (image_error==0);
         // read all the status registers in the servo
@@ -49,15 +58,6 @@ void programLoop(){
         tags.drive_status = getBit(_3x, 45, 3);
         // read the status of the limit switch
         checkSwitch(mset);
-        // if the camera has a non-fatal error, the 'continue' statement skips all the code and starts the loop again.
-        if (!image_error){
-            // process the picture through the vision algorithm
-            getMovement(&images);
-            // update the speed and deviation measurements based on the processed image
-            tags.deviation = ((float)images.shift_average.update(images.shift)/(float)ppi);
-            tags.speed = varySpeed(images.travel_average.update(images.travel), images.frame_gap);
-            tags.underspeed = (tags.speed < 0.25);
-        }
         // update the servo registers based on the speed, devation, and limit switch
         updateServo();
         // print to the console the frame-to-frame measurments register statuses

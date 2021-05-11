@@ -7,174 +7,98 @@ int coffset [] = {
     135,
     113,
     94,
-    119,
+    114,
     152,
     151,
     158
 };
 
+cv::Mat findAngles(cv::Mat image, float binning){
+    cv::Mat sobelx, sobely, magnitudes, angles;
+
+    cv::Sobel(image, sobelx, CV_32F, 1, 0, 1);
+    cv::Sobel(image, sobely, CV_32F, 0, 1, 1);
+    cv::cartToPolar(sobelx, sobely, magnitudes, angles, true);
+
+    cv::resize(angles, angles, cv::Size(), binning, binning, cv::INTER_AREA );
+
+    return angles;
+}
+
+cv::Point getPosition(cv::Mat &search){
+    double val_min, val_max;
+    cv::Point loc_min, loc_max;
+    cv::minMaxLoc(search, &val_min, &val_max, &loc_min, &loc_max);
+    return loc_max;
+}
+
+bool confidence(Images *images, cv::Mat&result){
+    cv::Mat heat_graph;
+    cv::matchTemplate(images->current_image, images->pattern_image, heat_graph, cv::TM_CCOEFF_NORMED);
+    float similarity = heat_graph.at<float>(0,0);
+
+    int rows = result.rows;
+    cv::normalize(result, result, 0, 1, cv::NORM_MINMAX);
+    cv::reduce(result, result, 0, cv::REDUCE_SUM);
+    float noise = result.at<float>(0,0)/rows;
+    noise = 1/(noise*10);
+
+    float similarity_weight = 0.5;
+    float noise_weight = 1;
+
+    float confidence_value = (similarity*similarity_weight)+(noise*noise_weight);
+
+    return (confidence_value>0.61);
+}
+
 void computeSpeed(Images *images){
-    
     cv::Mat image, templat, heat_map;
-    float scale_factor = 0.5;           // (320 X 256) -> (160 X 78)
-    int m_x = 6;
-    int m_y = 6;
-    int d_x = 4;
-    int d_y = 130;
+    float scale_factor = 0.5;
     int margin_y = 60;
-    int margin_x = 40;
 
     cv::Rect i_roi(0, margin_y,images->current_image.cols,images->current_image.rows-(margin_y*2));
-    cv::Rect p_roi(m_x,m_y,d_x,d_y);
+    cv::Rect p_roi(6,6,4,130);
     
-    cv::resize( images->current_image(i_roi),
-                image, // 160cols X 88rows
-                cv::Size(),
-                scale_factor, scale_factor );
-    
-    cv::resize( (images->previous_image(i_roi))(p_roi),
-                templat, // 2cols X 70rows
-                cv::Size(),
-                scale_factor, scale_factor );
+    cv::resize( images->current_image(i_roi), image, cv::Size(), scale_factor, scale_factor );
+    cv::resize( (images->previous_image(i_roi))(p_roi), templat, cv::Size(), scale_factor, scale_factor );
     
     cv::matchTemplate(image, templat, heat_map, cv::TM_CCOEFF_NORMED);
     
-    double val_min, val_max;
-    cv::Point loc_min, loc_max;
-    
-    cv::minMaxLoc(heat_map, &val_min, &val_max, &loc_min, &loc_max);
+    cv::Point position = getPosition(heat_map);
 
-    int travel = (loc_max.x/scale_factor) - m_x;
+    int travel = (position.x/scale_factor) - 6;
     images->travel = travel*4;
 }
 
 void computeMovement(Images *images){
-    int window_size = 40;
-    int margin_x = 0;
-    int margin_y = 0;
-    
     computeSpeed(images);
 
-    cv::Mat image, templat, heat_map;
-    float scale_factor = 0.5;
+    cv::Mat angles, result, result1, result2;
 
-    int corner = coffset[images->module_number]-(window_size/2);
-    // roi = Region of Interest. Shaves off edges to improve time.
-    cv::Rect i_roi( margin_x, 
-                    margin_y,
-                    images->current_image.cols-(margin_x*2),
-                    images->current_image.rows-(margin_y*2)
-                    );
-    cv::Rect p_roi( 0,
-                    corner,
-                    images->pattern_image.cols-1,
-                    window_size
-                    );
-    /*
-    std::cout   << images->current_image.rows << "\t"
-                << i_roi.x << "\t"
-                << i_roi.y << "\t"
-                << i_roi.width << "\t"
-                << i_roi.height << "\t\t"
-                << p_roi.x << "\t"
-                << p_roi.y << "\t"
-                << p_roi.width << "\t"
-                << p_roi.height << "\t"
-                << std::endl;
-                */
-    cv::resize( images->current_image(i_roi),
-                image,
-                cv::Size(),
-                scale_factor, 1 );
-    
-    cv::resize( images->pattern_image(p_roi),
-                templat,
-                cv::Size(),
-                scale_factor, 1 );
-    
-    cv::matchTemplate(image, templat, heat_map, cv::TM_CCOEFF_NORMED);
-    
-    double val_min, val_max;
-    cv::Point loc_min, loc_max;
+    angles = findAngles(images->current_image);
 
-    cv::minMaxLoc(heat_map, &val_min, &val_max, &loc_min, &loc_max);
-    int shift = loc_max.y - corner;
+    int center_cam = coffset[images->module_number]/2;
 
-    //std::cout << shift << std::endl;
-
-    images->shift = shift * 4;
-    
-}
-
-float oneDaverage(cv::Mat *vector){
-    float sum = 0;
-    float* beginning_of_row = vector->ptr<float>(0);
-    for(int i = 0; i < vector->rows; i++){
-        sum += (int)beginning_of_row[i];
+    if (images->program == 1){
+        cv::Rect roi( 0, (center_cam)-20, images->pattern_angles.cols, 40);
+        cv::matchTemplate(angles, images->pattern_angles(roi), result, cv::TM_CCOEFF_NORMED);
+        //std::cout << "Tufted" << std::endl;
     }
-    sum = sum / vector->rows;
-    //std::cout << sum << "\t" << vector->rows << "\t";
-    return sum;
-}
-
-bool oneDthresh(cv::Mat *vector, float average, float bound){
-    
-    float upper_average = 0;
-    float lower_average = 0;;
-
-    float* beginning_of_row = vector->ptr<float>(0);
-    for(int i = 0; i < vector->rows; i++){
-        upper_average += beginning_of_row[i]*(beginning_of_row[i]>average);
-        lower_average += beginning_of_row[i]*(beginning_of_row[i]<average);
+    else{
+        cv::matchTemplate(angles, images->synthetic_template, result1, cv::TM_CCOEFF_NORMED);
+        cv::matchTemplate(angles, images->synthetic_template_interted, result2, cv::TM_CCOEFF_NORMED);
+        cv::absdiff(result1, result2, result);
+        //std::cout << "printed/v202" << std::endl;
     }
-    upper_average /= (float)vector->rows;
-    lower_average /= (float)vector->rows;
 
-    float noise_band = abs(upper_average - lower_average);
+    cv::Point position = getPosition(result);
 
-    //std::cout << "\t" << noise_band << "\t" << std::endl;
+    int shift = (position.y+8)*2;
 
-    return (noise_band > bound);
-}
-
-void computeMovement2(Images *images){
-
-    int center_cam = coffset[images->module_number] - images->current_image.rows;
-
-    int offset = -13;
-
-    computeSpeed(images);
-    cv::Mat gray, sums, sobel;
-    
-    cv::cvtColor(images->current_image, gray, cv::COLOR_BGR2GRAY);
-
-    cv::Sobel(gray, sobel, CV_64F, 0, 1, 7, 1, 0, cv::BORDER_DEFAULT);
-
-    cv::reduce(sobel, sums, 1, cv::REDUCE_SUM );
-
-    cv::normalize(sums, sums, 1, -1, cv::NORM_MINMAX);
-
-    double val_min, val_max;
-    cv::Point loc_min, loc_max;
-
-    cv::minMaxLoc(sums, &val_min, &val_max, &loc_min, &loc_max);
-
-    cv::Mat av;
-    cv::reduce(sums, av, 0, cv::REDUCE_SUM);
-    float average = av.at<double>(0,0);
-
-    bool confidence = oneDthresh(&sums, average, 0.60);
-    
-    int shift = -(((abs(loc_min.y - loc_max.y)/2)+loc_max.y)-(128+offset));
-
-    //std::cout << "\t" << val_min << "\t" << val_max << std::endl;
-
-    if (confidence || !confidence)
-        images->shift_fallback = shift;
+    if (confidence(images,result))
+        images->shift = -((shift-(center_cam*2))*4);
     else
-        shift = images->shift_fallback;
-
-    images->shift = shift*4;
+        images->shift = 0;
 }
 
 bool loaded = false;
@@ -187,10 +111,7 @@ void getMovement(Images *local_set){
     start_comp = std::chrono::system_clock::now();
     ///////////////////////////////////////////////////////////////////////////////////////
     if (loaded && dF.count() <=300){
-        if (local_set->program == 1)
-            computeMovement(local_set);
-        else
-            computeMovement2(local_set);
+        computeMovement(local_set);
     }
     local_set->previous_image = local_set->current_image.clone();
     local_set->p_stamp = local_set->c_stamp;
@@ -199,5 +120,5 @@ void getMovement(Images *local_set){
     end_comp = std::chrono::system_clock::now();
 
     std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
-    //std::cout << " dF: " << dF.count() << " dV: " << dV.count() << " " << std::endl;
+    //std::cout << " dF: " << dF.count() << " dC: " << dV.count() << " " << std::endl;
 }

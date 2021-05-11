@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -88,6 +89,9 @@ struct Images{
     cv::Mat current_image;
     cv::Mat previous_image;
     cv::Mat pattern_image;
+    cv::Mat pattern_angles;
+    cv::Mat synthetic_template;
+    cv::Mat synthetic_template_interted;
     std::chrono::time_point<std::chrono::system_clock> c_stamp;
     std::chrono::time_point<std::chrono::system_clock> p_stamp;
 
@@ -116,6 +120,7 @@ struct Tags{
 };
 
 void getMovement(Images *local_set);
+cv::Mat findAngles(cv::Mat image, float binning = 0.5);
 #endif
 
 //wut

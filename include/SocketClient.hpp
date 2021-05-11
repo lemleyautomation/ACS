@@ -53,13 +53,13 @@ void sendMessage(Tags tags){
 	
 	char buffer[100];
 	int r = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
-
+	
 	if (r != 3){
 		//std::cout << "receive timeout, sent: " << n << std::endl;
 		images.program = 1;
 	}
 	else
 		images.program = (int)buffer[1];
-
+	
 	//std::cout << "selected program: " << (int)buffer[1] << "\t";// << std::endl;
 }

@@ -4,6 +4,7 @@ CameraPtr camera_pointer;
 
 void newPattern(){
     images.pattern_image = images.current_image.clone();
+    images.pattern_angles = findAngles(images.pattern_image);
     cv::imwrite("Pattern_new.Bmp", images.pattern_image);
 }
 
@@ -22,13 +23,13 @@ int get_new_image (CameraPtr pCam, int module){
             unsigned int YPadding = convertedImage->GetYPadding();
             unsigned int rowsize  = convertedImage->GetWidth();
             unsigned int colsize  = convertedImage->GetHeight();
-
+            
             cv::Mat sample( colsize+YPadding, 
                             rowsize+XPadding, 
-                            CV_8UC3, 
+                            CV_8UC1, 
                             convertedImage->GetData(), 
                             convertedImage->GetStride());
-
+            
             if (module < 5){
                 cv::flip(sample, sample, 1);
             }
@@ -61,8 +62,12 @@ int get_new_image (CameraPtr pCam, int module){
 }
 
 int startCamera(moduleSettings mset){
-    images.pattern_image = cv::imread("Pattern_new.Bmp");
-
+    images.pattern_image = cv::imread("Pattern_new.Bmp", cv::IMREAD_GRAYSCALE);
+    images.pattern_angles = findAngles(images.pattern_image);
+    cv::Mat synthetic_template = cv::imread("syntemp.Bmp", cv::IMREAD_GRAYSCALE);
+    synthetic_template.convertTo(images.synthetic_template, CV_32F);
+    cv::flip(images.synthetic_template, images.synthetic_template_interted, 0);
+    
     FlirSystem = System::GetInstance();
     camera_list = FlirSystem->GetCameras();
     const unsigned int numCameras = camera_list.GetSize();
