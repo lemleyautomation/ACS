@@ -104,7 +104,7 @@ void updateServo(){
             setBit(_4x, 1, 3, 1); // set start move to high
         }
         //***********************************************************************************//
-        float servo_position_command = toFloat(_3x[49], _3x[48]) + (tags.deviation);         // actual control
+        float servo_position_command = toFloat(_3x[49], _3x[48]) - (tags.deviation);         // actual control
         toUint(_4x, 37, servo_position_command);                                             //
         //***********************************************************************************//
     
