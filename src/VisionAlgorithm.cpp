@@ -48,7 +48,14 @@ bool confidence(Images *images, cv::Mat&result){
 
     float confidence_value = (similarity*similarity_weight)+(noise*noise_weight);
 
-    return (confidence_value>0.61);
+    //std::cout << std::fixed;
+    //std::cout << std::setprecision(2);
+    //std::cout << "\t" << similarity << "\t" << noise << "\t" << confidence_value << std::endl;
+
+    if (images->program == 1)
+        return (confidence_value>0.2);
+    else
+        return (confidence_value>0.61);
 }
 
 void computeSpeed(Images *images){

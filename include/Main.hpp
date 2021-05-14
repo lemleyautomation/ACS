@@ -116,6 +116,7 @@ struct Tags{
     bool cam_status = false;
     bool drive_status = false;
     bool shutdown = false;
+    bool tufted = false;
     unsigned int module_number;
 };
 

@@ -32,6 +32,7 @@ void stopMessaging(){
 	close(sockfd);
 }
 
+bool program_status = false;
 void sendMessage(Tags tags){
 
 	uint8_t deviation = abs(tags.deviation*100);
@@ -43,8 +44,9 @@ void sendMessage(Tags tags){
 	bits[2] = tags.drive_status;
 	bits[3] = tags.underspeed;
 	bits[4] = (tags.deviation<0);
+	bits[5] = program_status;
 	status = bits.to_ulong();
-	
+
 	char hello[] = { 'B', (char)tags.module_number, deviation, speed, status, 'E' };
 
 	unsigned int len;
@@ -58,8 +60,10 @@ void sendMessage(Tags tags){
 		//std::cout << "receive timeout, sent: " << n << std::endl;
 		images.program = 1;
 	}
-	else
+	else{
 		images.program = (int)buffer[1];
+		program_status = images.program-1;
+	}
 	
 	//std::cout << "selected program: " << (int)buffer[1] << "\t";// << std::endl;
 }
