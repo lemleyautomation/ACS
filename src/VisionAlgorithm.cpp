@@ -6,11 +6,11 @@ int coffset [] = {
     142,
     133,
     113,
-    112,
-    114, //114
-    105,
-    108,
-    146
+    144,
+    108, //114
+    151,
+    148,
+    110
 };
 
 cv::Mat findAngles(cv::Mat image, float binning){
