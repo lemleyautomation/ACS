@@ -4,13 +4,13 @@ int coffset [] = {
     0,
     128,
     142,
-    146,
-    118,
-    94,
-    114,
-    152,
-    151,
-    158
+    133,
+    113,
+    208,
+    114, //114
+    215,
+    212,
+    174
 };
 
 cv::Mat findAngles(cv::Mat image, float binning){
@@ -78,22 +78,25 @@ void computeMovement(Images *images){
     angles = findAngles(images->current_image);
 
     int center_cam = coffset[images->module_number]/2;
+    int window_offset = 0;
 
     if (images->program == 1){
         cv::Rect roi( 0, (center_cam)-20, images->pattern_angles.cols, 40);
         cv::matchTemplate(angles, images->pattern_angles(roi), result, cv::TM_CCOEFF_NORMED);
+        window_offset = 20;
         //std::cout << "Tufted" << std::endl;
     }
     else{
         cv::matchTemplate(angles, images->synthetic_template, result1, cv::TM_CCOEFF_NORMED);
         cv::matchTemplate(angles, images->synthetic_template_interted, result2, cv::TM_CCOEFF_NORMED);
         cv::absdiff(result1, result2, result);
+        window_offset = 8;
         //std::cout << "printed/v202" << std::endl;
     }
 
     cv::Point position = getPosition(result);
 
-    int shift = (position.y+8)*2;
+    int shift = (position.y+window_offset)*2;
 
     if (confidence(images,result))
         images->shift = -((shift-(center_cam*2))*4);
