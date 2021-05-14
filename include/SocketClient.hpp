@@ -32,7 +32,9 @@ void stopMessaging(){
 	close(sockfd);
 }
 
-bool program_status = false;
+bool program1 = false;
+bool program2 = false;
+bool program3 = false;
 void sendMessage(Tags tags){
 
 	uint8_t deviation = abs(tags.deviation*100);
@@ -44,7 +46,9 @@ void sendMessage(Tags tags){
 	bits[2] = tags.drive_status;
 	bits[3] = tags.underspeed;
 	bits[4] = (tags.deviation<0);
-	bits[5] = program_status;
+	bits[5] = program1;
+	bits[6] = program2;
+	bits[7] = program3;
 	status = bits.to_ulong();
 
 	char hello[] = { 'B', (char)tags.module_number, deviation, speed, status, 'E' };
@@ -62,7 +66,15 @@ void sendMessage(Tags tags){
 	}
 	else{
 		images.program = (int)buffer[1];
-		program_status = images.program-1;
+		program1 = 0;
+		program2 = 0;
+		program3 = 0;
+		if (images.program == 1)
+			program1 = 1;
+		if (images.program == 2)
+			program2 = 1;
+		if (images.program == 3)
+			program3 = 1;
 	}
 	
 	//std::cout << "selected program: " << (int)buffer[1] << "\t";// << std::endl;

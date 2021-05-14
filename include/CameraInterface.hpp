@@ -4,7 +4,9 @@ CameraPtr camera_pointer;
 
 void newPattern(){
     images.pattern_image = images.current_image.clone();
-    images.pattern_angles = findAngles(images.pattern_image);
+    cv::Mat im;
+    cv::cvtColor(images.pattern_image, im, cv::COLOR_BGR2GRAY);
+    images.pattern_angles = findAngles(im);
     cv::imwrite("Pattern_new.Bmp", images.pattern_image);
 }
 
@@ -26,10 +28,10 @@ int get_new_image (CameraPtr pCam, int module){
             
             cv::Mat sample( colsize+YPadding, 
                             rowsize+XPadding, 
-                            CV_8UC1, 
+                            CV_8UC3, 
                             convertedImage->GetData(), 
                             convertedImage->GetStride());
-            
+
             if (module < 5){
                 cv::flip(sample, sample, 1);
             }
@@ -62,8 +64,10 @@ int get_new_image (CameraPtr pCam, int module){
 }
 
 int startCamera(moduleSettings mset){
-    images.pattern_image = cv::imread("Pattern_new.Bmp", cv::IMREAD_GRAYSCALE);
-    images.pattern_angles = findAngles(images.pattern_image);
+    images.pattern_image = cv::imread("Pattern_new.Bmp");
+    cv::Mat im;
+    cv::cvtColor(images.pattern_image, im, cv::COLOR_BGR2GRAY);
+    images.pattern_angles = findAngles(im);
     cv::Mat synthetic_template = cv::imread("syntemp.Bmp", cv::IMREAD_GRAYSCALE);
     synthetic_template.convertTo(images.synthetic_template, CV_32F);
     cv::flip(images.synthetic_template, images.synthetic_template_interted, 0);
@@ -96,7 +100,7 @@ int startCamera(moduleSettings mset){
     ptrAcquisitionMode->SetIntValue(ptrAcquisitionModeContinuous->GetValue());
     camera_pointer->BeginAcquisition();
     
-    camera_pointer->AcquisitionFrameRate.SetValue(30); //34.995
+    camera_pointer->AcquisitionFrameRate.SetValue(20); //34.995
     
     std::cout << "acquiring" << std::endl;
 

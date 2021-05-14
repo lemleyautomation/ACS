@@ -25,16 +25,20 @@ cv::Mat findAngles(cv::Mat image, float binning){
     return angles;
 }
 
+
+double val_min, val_max;
 cv::Point getPosition(cv::Mat &search){
-    double val_min, val_max;
     cv::Point loc_min, loc_max;
     cv::minMaxLoc(search, &val_min, &val_max, &loc_min, &loc_max);
     return loc_max;
 }
 
 bool confidence(Images *images, cv::Mat&result){
-    cv::Mat heat_graph;
-    cv::matchTemplate(images->current_image, images->pattern_image, heat_graph, cv::TM_CCOEFF_NORMED);
+    float scale_factor = 0.5;
+    cv::Mat heat_graph, image, templat;
+    cv::resize( images->current_image, image, cv::Size(), scale_factor, scale_factor );
+    cv::resize( images->previous_image, templat, cv::Size(), scale_factor, scale_factor );
+    cv::matchTemplate(image, templat, heat_graph, cv::TM_CCOEFF_NORMED);
     float similarity = heat_graph.at<float>(0,0);
 
     int rows = result.rows;
@@ -50,7 +54,9 @@ bool confidence(Images *images, cv::Mat&result){
 
     //std::cout << std::fixed;
     //std::cout << std::setprecision(2);
-    //std::cout << "\t" << similarity << "\t" << noise << "\t" << confidence_value << std::endl;
+    //std::cout << "\t" << val_max << "\t" << similarity << "\t" << noise << "\t" << confidence_value << std::endl;
+
+    // tufted: >0.4 >0.7
 
     if (images->program == 1)
         return (confidence_value>0.2);
@@ -80,33 +86,52 @@ void computeSpeed(Images *images){
 void computeMovement(Images *images){
     computeSpeed(images);
 
-    cv::Mat angles, result, result1, result2;
+    cv::Mat angles, result, result1, result2, im, tm;
 
-    angles = findAngles(images->current_image);
-
-    int center_cam = coffset[images->module_number]/2;
+    int center_cam = coffset[images->module_number];
     int window_offset = 0;
+    cv::Point position;
+    int shift = 0;
 
     if (images->program == 1){
-        cv::Rect roi( 0, (center_cam)-20, images->pattern_angles.cols, 40);
-        cv::matchTemplate(angles, images->pattern_angles(roi), result, cv::TM_CCOEFF_NORMED);
-        window_offset = 20;
+        cv::Rect roi( 0, (center_cam)-25, images->pattern_image.cols, 50);
+        cv::resize(images->current_image, im, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
+        cv::resize(images->pattern_image(roi), tm, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
+        cv::matchTemplate(im, tm, result, cv::TM_CCOEFF_NORMED);
+        position = getPosition(result);
+        window_offset = 25;
+        shift = (position.y+window_offset);
+        shift = -((shift-center_cam)*4);
         //std::cout << "Tufted" << std::endl;
     }
+    else if (images->program == 2){
+        cv::cvtColor(images->current_image, im, cv::COLOR_BGR2GRAY);
+        angles = findAngles(im);
+        cv::Rect roi( 0, (center_cam/2)-20, images->pattern_angles.cols, 40);
+        cv::matchTemplate(angles, images->pattern_angles(roi), result, cv::TM_CCOEFF_NORMED);
+        position = getPosition(result);
+        window_offset = 20;
+        shift = (position.y+window_offset)*2;
+        shift = -((shift-(center_cam))*4);
+        //std::cout << "fuzzy tufted" << std::endl;
+    }
     else{
+        cv::cvtColor(images->current_image, im, cv::COLOR_BGR2GRAY);
+        angles = findAngles(im);
         cv::matchTemplate(angles, images->synthetic_template, result1, cv::TM_CCOEFF_NORMED);
         cv::matchTemplate(angles, images->synthetic_template_interted, result2, cv::TM_CCOEFF_NORMED);
         cv::absdiff(result1, result2, result);
+        position = getPosition(result);
         window_offset = 8;
+        shift = (position.y+window_offset)*2;
+        shift = -((shift-(center_cam))*4);
         //std::cout << "printed/v202" << std::endl;
     }
 
-    cv::Point position = getPosition(result);
+    //std::cout << shift << std::endl;
 
-    int shift = (position.y+window_offset)*2;
-
-    if (confidence(images,result))
-        images->shift = -((shift-(center_cam*2))*4);
+    if (true)//confidence(images,result))
+        images->shift = shift;
     else
         images->shift = 0;
 }
