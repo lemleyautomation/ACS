@@ -70,7 +70,7 @@ int startCamera(moduleSettings mset){
     images.pattern_angles = findAngles(im);
     cv::Mat synthetic_template = cv::imread("syntemp.Bmp", cv::IMREAD_GRAYSCALE);
     synthetic_template.convertTo(images.synthetic_template, CV_32F);
-    cv::flip(images.synthetic_template, images.synthetic_template_interted, 0);
+    cv::flip(images.synthetic_template, images.synthetic_template_inverted, 0);
     
     FlirSystem = System::GetInstance();
     camera_list = FlirSystem->GetCameras();
@@ -100,7 +100,7 @@ int startCamera(moduleSettings mset){
     ptrAcquisitionMode->SetIntValue(ptrAcquisitionModeContinuous->GetValue());
     camera_pointer->BeginAcquisition();
     
-    camera_pointer->AcquisitionFrameRate.SetValue(20); //34.995
+    camera_pointer->AcquisitionFrameRate.SetValue(30); //34.995
     
     std::cout << "acquiring" << std::endl;
 

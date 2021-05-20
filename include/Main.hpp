@@ -91,7 +91,7 @@ struct Images{
     cv::Mat pattern_image;
     cv::Mat pattern_angles;
     cv::Mat synthetic_template;
-    cv::Mat synthetic_template_interted;
+    cv::Mat synthetic_template_inverted;
     std::chrono::time_point<std::chrono::system_clock> c_stamp;
     std::chrono::time_point<std::chrono::system_clock> p_stamp;
 

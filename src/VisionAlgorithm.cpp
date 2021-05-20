@@ -83,15 +83,23 @@ void computeSpeed(Images *images){
     images->travel = travel*4;
 }
 
+int stack_head = 0;
+int stack_base = 7;
+std::vector<cv::Mat> image_stack(stack_base);
+cv::Mat stacked = cv::Mat::zeros(256, 320, CV_8UC3);
+bool full_stack = false;
+
 void computeMovement(Images *images){
     computeSpeed(images);
 
-    cv::Mat angles, result, result1, result2, im, tm;
+    cv::Mat angles, result, result1, result2, im, tm, sobely, sobelx, magnitudes;
 
     int center_cam = coffset[images->module_number];
     int window_offset = 0;
     cv::Point position;
     int shift = 0;
+
+    //images->program = 4;
 
     if (images->program == 1){
         cv::Rect roi( 0, (center_cam)-25, images->pattern_image.cols, 50);
@@ -104,7 +112,7 @@ void computeMovement(Images *images){
         shift = -((shift-center_cam)*4);
         //std::cout << "Tufted" << std::endl;
     }
-    else if (images->program == 2){
+    else if (images->program == 4){
         cv::cvtColor(images->current_image, im, cv::COLOR_BGR2GRAY);
         angles = findAngles(im);
         cv::Rect roi( 0, (center_cam/2)-20, images->pattern_angles.cols, 40);
@@ -115,11 +123,43 @@ void computeMovement(Images *images){
         shift = -((shift-(center_cam))*4);
         //std::cout << "fuzzy tufted" << std::endl;
     }
+    else if (images->program == 2){
+        if (full_stack)
+            stacked -= image_stack[stack_head];
+        image_stack[stack_head] = images->current_image.clone() / stack_base;
+        stacked += image_stack[stack_head];
+
+        cv::cvtColor(stacked, im, cv::COLOR_BGR2GRAY);
+
+        cv::Sobel(im, sobelx, CV_32F, 1, 0, 1);
+        cv::Sobel(im, sobely, CV_32F, 0, 1, 1);
+        cv::cartToPolar(sobelx, sobely, magnitudes, angles, true);
+
+        cv::resize(sobely, sobely, cv::Size(128,128), 0,0, cv::INTER_AREA );
+        cv::resize(magnitudes, magnitudes, cv::Size(128,128), 0,0, cv::INTER_AREA );
+
+        result = magnitudes + sobely;
+        cv::GaussianBlur(result, result, cv::Size(0,0), 7);
+
+        cv::reduce(result, result, 1, cv::REDUCE_SUM);
+        cv::normalize(result, result, -1, 1, cv::NORM_MINMAX);
+
+        position = getPosition(result);
+        window_offset = 0;
+        shift = (position.y+window_offset)*2;
+        shift = -((shift-(center_cam))*4);
+
+        //std::cout << shift << std::endl;
+
+        if (!full_stack && stack_head == (stack_base-1))
+            full_stack = true;
+        stack_head = (stack_head+1)%stack_base;
+    }
     else{
         cv::cvtColor(images->current_image, im, cv::COLOR_BGR2GRAY);
         angles = findAngles(im);
         cv::matchTemplate(angles, images->synthetic_template, result1, cv::TM_CCOEFF_NORMED);
-        cv::matchTemplate(angles, images->synthetic_template_interted, result2, cv::TM_CCOEFF_NORMED);
+        cv::matchTemplate(angles, images->synthetic_template_inverted, result2, cv::TM_CCOEFF_NORMED);
         cv::absdiff(result1, result2, result);
         position = getPosition(result);
         window_offset = 8;
@@ -143,16 +183,16 @@ void getMovement(Images *local_set){
     std::chrono::milliseconds dF = std::chrono::duration_cast<std::chrono::milliseconds>(local_set->c_stamp-local_set->p_stamp);
     local_set->frame_gap = dF.count();
 
-    start_comp = std::chrono::system_clock::now();
-    ///////////////////////////////////////////////////////////////////////////////////////
-    if (loaded && dF.count() <=300){
-        computeMovement(local_set);
-    }
-    local_set->previous_image = local_set->current_image.clone();
-    local_set->p_stamp = local_set->c_stamp;
-    loaded = true;
-    ///////////////////////////////////////////////////////////////////////////////////////
-    end_comp = std::chrono::system_clock::now();
+        start_comp = std::chrono::system_clock::now();
+        ///////////////////////////////////////////////////////////////////////////////////////
+        if (loaded && dF.count() <=300){
+            computeMovement(local_set);
+        }
+        local_set->previous_image = local_set->current_image.clone();
+        local_set->p_stamp = local_set->c_stamp;
+        loaded = true;
+        ///////////////////////////////////////////////////////////////////////////////////////
+        end_comp = std::chrono::system_clock::now();
 
     std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
     //std::cout << " dF: " << dF.count() << " dC: " << dV.count() << " " << std::endl;
