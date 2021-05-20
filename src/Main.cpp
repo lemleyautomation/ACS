@@ -122,7 +122,7 @@ int main(int argc, char **argv){
     tags.drive_status = true;
 
     images.travel_average.base = 3;
-    images.shift_average.base = 3;
+    images.shift_average.base = 10;
 
     programLoop();
 
