@@ -102,7 +102,7 @@ void computeMovement(Images *images){
     //images->program = 4;
 
     if (images->program == 1){
-        images->shift_average.base = 10;
+        images->shift_average.base = 7;
         cv::Rect roi( 0, (center_cam)-25, images->pattern_image.cols, 50);
         cv::resize(images->current_image, im, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
         cv::resize(images->pattern_image(roi), tm, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
@@ -147,7 +147,7 @@ void computeMovement(Images *images){
         cv::normalize(result, result, -1, 1, cv::NORM_MINMAX);
 
         position = getPosition(result);
-        window_offset = -8;
+        window_offset = -2;
         shift = (position.y+window_offset)*2;
         shift = -((shift-(center_cam))*4);
 
@@ -158,14 +158,14 @@ void computeMovement(Images *images){
         stack_head = (stack_head+1)%stack_base;
     }
     else{
-        images->shift_average.base = 10;
+        images->shift_average.base = 7;
         cv::cvtColor(images->current_image, im, cv::COLOR_BGR2GRAY);
         angles = findAngles(im);
         cv::matchTemplate(angles, images->synthetic_template, result1, cv::TM_CCOEFF_NORMED);
         cv::matchTemplate(angles, images->synthetic_template_inverted, result2, cv::TM_CCOEFF_NORMED);
         cv::absdiff(result1, result2, result);
         position = getPosition(result);
-        window_offset = 4;
+        window_offset = 5;
         shift = (position.y+window_offset)*2;
         shift = -((shift-(center_cam))*4);
         //std::cout << "printed/v202" << std::endl;
