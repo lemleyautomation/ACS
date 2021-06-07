@@ -125,7 +125,7 @@ void computeMovement(Images *images){
         //std::cout << "fuzzy tufted" << std::endl;
     }
     else if (images->program == 2){
-        images->shift_average.base = 3;
+        images->shift_average.base = 6;
 
         cv::Mat bgr[3];   //destination array
         cv::split(images->current_image,bgr);//split source  
