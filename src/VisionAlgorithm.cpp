@@ -126,6 +126,63 @@ void computeMovement(Images *images){
     }
     else if (images->program == 2){
         images->shift_average.base = 3;
+
+        cv::Mat bgr[3];   //destination array
+        cv::split(images->current_image,bgr);//split source  
+
+        cv::Mat Rx,Ry,Rm,Ra,Rs;
+        cv::Mat Gx,Gy,Gm,Ga,Gs;
+        cv::Mat Bx,By,Bm,Ba,Bs;
+
+        cv::Sobel(bgr[0], Rx, CV_32F, 1, 0, 1);
+        cv::Sobel(bgr[0], Ry, CV_32F, 0, 1, 1);
+        cv::cartToPolar(Rx, Ry, Rm, Ra, true);
+        cv::resize(Rx, Rx, cv::Size(128,128), 0,0, cv::INTER_AREA );
+        cv::resize(Ry, Ry, cv::Size(128,128), 0,0, cv::INTER_AREA );
+        cv::resize(Rm, Rm, cv::Size(128,128), 0,0, cv::INTER_AREA );
+
+        cv::Sobel(bgr[1], Gx, CV_32F, 1, 0, 1);
+        cv::Sobel(bgr[1], Gy, CV_32F, 0, 1, 1);
+        cv::cartToPolar(Gx, Gy, Gm, Ga, true);
+        cv::resize(Gx, Gx, cv::Size(128,128), 0,0, cv::INTER_AREA );
+        cv::resize(Gy, Gy, cv::Size(128,128), 0,0, cv::INTER_AREA );
+        cv::resize(Gm, Gm, cv::Size(128,128), 0,0, cv::INTER_AREA );
+
+        cv::Sobel(bgr[2], Bx, CV_32F, 1, 0, 1);
+        cv::Sobel(bgr[2], By, CV_32F, 0, 1, 1);
+        cv::cartToPolar(Bx, By, Bm, Ba, true);
+        cv::resize(Bx, Bx, cv::Size(128,128), 0,0, cv::INTER_AREA );
+        cv::resize(By, By, cv::Size(128,128), 0,0, cv::INTER_AREA );
+        cv::resize(Bm, Bm, cv::Size(128,128), 0,0, cv::INTER_AREA );
+
+        Rs = Ry-Rx;
+        cv::normalize(Rs,Rs, 0,255, cv::NORM_MINMAX);
+        Rs = Rs + Rm;
+        cv::reduce(Rs, Rs, 1, cv::REDUCE_SUM);
+
+        Gs = Gy-Gx;
+        cv::normalize(Gs,Gs, 0,255, cv::NORM_MINMAX);
+        Gs = Gs + Gm;
+        cv::reduce(Gs, Gs, 1, cv::REDUCE_SUM);
+        
+        Bs = By-Bx;
+        cv::normalize(Bs,Bs, 0,255, cv::NORM_MINMAX);
+        Bs = Bs + Bm;
+        cv::reduce(Bs, Bs, 1, cv::REDUCE_SUM);
+
+        cv::Point position1, position2, position3;
+
+        position1 = getPosition(Rs);
+        position2 = getPosition(Gs);
+        position3 = getPosition(Bs);
+
+        shift = ((position1.y+position2.y+position3.y)/3)*2;
+        //std::cout << "\t" << shift << "\t";
+        shift = -((shift-(center_cam))*4);
+        images->shift = shift;
+    }
+    else if (images->program == 5){
+        images->shift_average.base = 3;
         if (full_stack)
             stacked -= image_stack[stack_head];
         image_stack[stack_head] = images->current_image.clone() / stack_base;
@@ -156,6 +213,7 @@ void computeMovement(Images *images){
         if (!full_stack && stack_head == (stack_base-1))
             full_stack = true;
         stack_head = (stack_head+1)%stack_base;
+        // std::cout << "fuzzy tufted new" << std::endl;
     }
     else{
         images->shift_average.base = 7;
