@@ -115,17 +115,6 @@ void computeMovement(Images *images){
         shift = -((shift-center_cam)*4);
         //std::cout << "Tufted" << std::endl;
     }
-    else if (images->program == 4){
-        cv::cvtColor(images->current_image, im, cv::COLOR_BGR2GRAY);
-        angles = findAngles(im);
-        cv::Rect roi( 0, (center_cam/2)-20, images->pattern_angles.cols, 40);
-        cv::matchTemplate(angles, images->pattern_angles(roi), result, cv::TM_CCOEFF_NORMED);
-        position = getPosition(result);
-        window_offset = 20;
-        shift = (position.y+window_offset)*2;
-        shift = -((shift-(center_cam))*4);
-        //std::cout << "fuzzy tufted" << std::endl;
-    }
     else if (images->program == 2){
         images->shift_average.base = 1;
 
@@ -168,7 +157,7 @@ void computeMovement(Images *images){
 
         uint8_t lt[256];
         for (int i =0; i < 256; i++){
-            float datum = (-128*cos(i*((4*PI)/255)))+128;
+            float datum = (-128*cos(i*0.049))+128;
             lt[i] = uint8_t(datum);
         }
         cv::Mat lut(256, 1, CV_8U, 1);
@@ -176,10 +165,10 @@ void computeMovement(Images *images){
         cv::LUT(Ra,lut,Ra);
         cv::LUT(Ga,lut,Ga);
         cv::LUT(Ba,lut,Ba);
+        
+        result = (0.2*Rm) + (0.2*Gm) + (0.2*Bm); // simple tufted
 
-        result = /*(0.133*Ra) + (0.133*Ga) + (0.133*Ba) + */(0.2*Rm) + (0.2*Gm) + (0.2*Bm);
-
-        //cv::GaussianBlur(result, result, cv::Size(0,0), 3);
+        //cv::GaussianBlur(result, result, cv::Size(0,0), 1);
 
         cv::reduce(result,result,1,cv::REDUCE_AVG);
 
@@ -196,57 +185,85 @@ void computeMovement(Images *images){
         window_offset = 0;
 
         shift = int(pos*2.56) + window_offset;
+        //std::cout << "\t" << position.y << "\t" << shift << "\n";
         shift = -((shift-(center_cam))*4);
-        //std::cout << "\t" << pos << "\t" << shift << "\t" << images->travel << "\n";
 
         images->shift = shift;
     }
-    else if (images->program == 5){
-        images->shift_average.base = 3;
-        if (full_stack)
-            stacked -= image_stack[stack_head];
-        image_stack[stack_head] = images->current_image.clone() / stack_base;
-        stacked += image_stack[stack_head];
-
-        cv::cvtColor(stacked, im, cv::COLOR_BGR2GRAY);
-
-        cv::Sobel(im, sobelx, CV_32F, 1, 0, 1);
-        cv::Sobel(im, sobely, CV_32F, 0, 1, 1);
-        cv::cartToPolar(sobelx, sobely, magnitudes, angles, true);
-
-        cv::resize(sobely, sobely, cv::Size(128,128), 0,0, cv::INTER_AREA );
-        cv::resize(magnitudes, magnitudes, cv::Size(128,128), 0,0, cv::INTER_AREA );
-
-        result = magnitudes + sobely;
-        cv::GaussianBlur(result, result, cv::Size(0,0), 9);
-
-        cv::reduce(result, result, 1, cv::REDUCE_SUM);
-        cv::normalize(result, result, -1, 1, cv::NORM_MINMAX);
-
-        position = getPosition(result);
-        window_offset = -2;
-        shift = (position.y+window_offset)*2;
-        shift = -((shift-(center_cam))*4);
-
-        //std::cout << shift << std::endl;
-
-        if (!full_stack && stack_head == (stack_base-1))
-            full_stack = true;
-        stack_head = (stack_head+1)%stack_base;
-        // std::cout << "fuzzy tufted new" << std::endl;
-    }
     else{
-        images->shift_average.base = 7;
-        cv::cvtColor(images->current_image, im, cv::COLOR_BGR2GRAY);
-        angles = findAngles(im);
-        cv::matchTemplate(angles, images->synthetic_template, result1, cv::TM_CCOEFF_NORMED);
-        cv::matchTemplate(angles, images->synthetic_template_inverted, result2, cv::TM_CCOEFF_NORMED);
-        cv::absdiff(result1, result2, result);
+        images->shift_average.base = 1;
+
+        cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
+        cv::GaussianBlur(im, im, cv::Size(0,0), 1);
+
+        cv::Mat bgr[3];
+        cv::split(im,bgr);
+
+        cv::Mat Rx,Ry,Rm,Ra,Rs;
+        cv::Mat Gx,Gy,Gm,Ga,Gs;
+        cv::Mat Bx,By,Bm,Ba,Bs;
+
+        cv::Sobel(bgr[0], Rx, CV_32F, 1, 0, 1);
+        cv::Sobel(bgr[0], Ry, CV_32F, 0, 1, 1);
+        cv::cartToPolar(Rx, Ry, Rm, Ra, true);
+
+        cv::Sobel(bgr[1], Gx, CV_32F, 1, 0, 1);
+        cv::Sobel(bgr[1], Gy, CV_32F, 0, 1, 1);
+        cv::cartToPolar(Gx, Gy, Gm, Ga, true);
+
+        cv::Sobel(bgr[2], Bx, CV_32F, 1, 0, 1);
+        cv::Sobel(bgr[2], By, CV_32F, 0, 1, 1);
+        cv::cartToPolar(Bx, By, Bm, Ba, true);
+
+        cv::normalize(Rm,Rm, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Gm,Gm, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Bm,Bm, 0,255, cv::NORM_MINMAX);
+
+        cv::normalize(Ra,Ra, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Ga,Ga, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Ba,Ba, 0,255, cv::NORM_MINMAX);
+
+        Ra.convertTo(Ra, CV_8U);
+        Ga.convertTo(Ga, CV_8U);
+        Ba.convertTo(Ba, CV_8U);
+        Rm.convertTo(Rm, CV_8U);
+        Gm.convertTo(Gm, CV_8U);
+        Bm.convertTo(Bm, CV_8U);
+
+        uint8_t lt[256];
+        for (int i =0; i < 256; i++){
+            float datum = (-128*cos(i*0.049))+128;
+            lt[i] = uint8_t(datum);
+        }
+        cv::Mat lut(256, 1, CV_8U, 1);
+
+        cv::LUT(Ra,lut,Ra);
+        cv::LUT(Ga,lut,Ga);
+        cv::LUT(Ba,lut,Ba);
+        
+        result = (0.32*Ra) + (0.167*Ga) + (0.167*Ba) + (0.167*Rm) + (0.167*Gm) + (0.167*Bm);
+
+        //cv::GaussianBlur(result, result, cv::Size(0,0), 1);
+
+        cv::reduce(result,result,1,cv::REDUCE_AVG);
+
         position = getPosition(result);
-        window_offset = 5;
-        shift = (position.y+window_offset)*2;
+
+        if (position.y > pos)
+            pos++;
+        else if (position.y < pos)
+            pos--;
+        
+        if (images->travel_average.avg < 50)
+            pos = int((float)center_cam/2.56);
+
+        window_offset = 10;
+
+        shift = int(pos*2.56) + window_offset;
+        std::cout << "\t" << position.y << "\t" << shift << "\n";
         shift = -((shift-(center_cam))*4);
-        //std::cout << "printed/v202" << std::endl;
+
+        images->shift = shift;
     }
 
     //std::cout << shift << std::endl;
