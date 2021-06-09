@@ -15,6 +15,8 @@
 #include <condition_variable>
 #include <bitset>
 #include <chrono>
+#include <cmath>
+#define PI 3.14159265
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>

@@ -6,6 +6,8 @@
 
 #IncludeRegexTransform: 
 
+../include/CameraInterface.hpp
+
 ../include/Main.hpp
 unistd.h
 -
@@ -35,6 +37,8 @@ bitset
 -
 chrono
 -
+cmath
+-
 opencv2/imgcodecs.hpp
 -
 opencv2/highgui.hpp
@@ -55,6 +59,32 @@ spinnaker/SpinGenApi/SpinnakerGenApi.h
 ../include/spinnaker/SpinGenApi/SpinnakerGenApi.h
 modbus.h
 -
+
+../include/ModbusInterface.hpp
+
+../include/SocketClient.hpp
+sys/types.h
+-
+sys/socket.h
+-
+arpa/inet.h
+-
+netinet/in.h
+-
+
+../include/SocketServer.hpp
+
+/home/pi/Desktop/ACS/src/Main.cpp
+Main.hpp
+/home/pi/Desktop/ACS/src/Main.hpp
+SocketClient.hpp
+/home/pi/Desktop/ACS/src/SocketClient.hpp
+CameraInterface.hpp
+/home/pi/Desktop/ACS/src/CameraInterface.hpp
+ModbusInterface.hpp
+/home/pi/Desktop/ACS/src/ModbusInterface.hpp
+SocketServer.hpp
+/home/pi/Desktop/ACS/src/SocketServer.hpp
 
 /home/pi/Desktop/ACS/src/VisionAlgorithm.cpp
 Main.hpp

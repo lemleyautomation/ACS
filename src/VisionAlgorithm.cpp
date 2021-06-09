@@ -89,6 +89,8 @@ std::vector<cv::Mat> image_stack(stack_base);
 cv::Mat stacked = cv::Mat::zeros(256, 320, CV_8UC3);
 bool full_stack = false;
 
+float pos = 50;
+
 void computeMovement(Images *images){
     computeSpeed(images);
 
@@ -125,10 +127,13 @@ void computeMovement(Images *images){
         //std::cout << "fuzzy tufted" << std::endl;
     }
     else if (images->program == 2){
-        images->shift_average.base = 6;
+        images->shift_average.base = 1;
 
-        cv::Mat bgr[3];   //destination array
-        cv::split(images->current_image,bgr);//split source  
+        cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
+        cv::GaussianBlur(im, im, cv::Size(0,0), 1);
+
+        cv::Mat bgr[3];
+        cv::split(im,bgr);
 
         cv::Mat Rx,Ry,Rm,Ra,Rs;
         cv::Mat Gx,Gy,Gm,Ga,Gs;
@@ -137,46 +142,56 @@ void computeMovement(Images *images){
         cv::Sobel(bgr[0], Rx, CV_32F, 1, 0, 1);
         cv::Sobel(bgr[0], Ry, CV_32F, 0, 1, 1);
         cv::cartToPolar(Rx, Ry, Rm, Ra, true);
-        cv::resize(Rx, Rx, cv::Size(128,128), 0,0, cv::INTER_AREA );
-        cv::resize(Ry, Ry, cv::Size(128,128), 0,0, cv::INTER_AREA );
-        cv::resize(Rm, Rm, cv::Size(128,128), 0,0, cv::INTER_AREA );
 
         cv::Sobel(bgr[1], Gx, CV_32F, 1, 0, 1);
         cv::Sobel(bgr[1], Gy, CV_32F, 0, 1, 1);
         cv::cartToPolar(Gx, Gy, Gm, Ga, true);
-        cv::resize(Gx, Gx, cv::Size(128,128), 0,0, cv::INTER_AREA );
-        cv::resize(Gy, Gy, cv::Size(128,128), 0,0, cv::INTER_AREA );
-        cv::resize(Gm, Gm, cv::Size(128,128), 0,0, cv::INTER_AREA );
 
         cv::Sobel(bgr[2], Bx, CV_32F, 1, 0, 1);
         cv::Sobel(bgr[2], By, CV_32F, 0, 1, 1);
         cv::cartToPolar(Bx, By, Bm, Ba, true);
-        cv::resize(Bx, Bx, cv::Size(128,128), 0,0, cv::INTER_AREA );
-        cv::resize(By, By, cv::Size(128,128), 0,0, cv::INTER_AREA );
-        cv::resize(Bm, Bm, cv::Size(128,128), 0,0, cv::INTER_AREA );
 
-        Rs = Ry-Rx;
-        cv::normalize(Rs,Rs, 0,255, cv::NORM_MINMAX);
-        Rs = Rs + Rm;
-        cv::reduce(Rs, Rs, 1, cv::REDUCE_SUM);
+        cv::normalize(Rm,Rm, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Gm,Gm, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Bm,Bm, 0,255, cv::NORM_MINMAX);
 
-        Gs = Gy-Gx;
-        cv::normalize(Gs,Gs, 0,255, cv::NORM_MINMAX);
-        Gs = Gs + Gm;
-        cv::reduce(Gs, Gs, 1, cv::REDUCE_SUM);
-        
-        Bs = By-Bx;
-        cv::normalize(Bs,Bs, 0,255, cv::NORM_MINMAX);
-        Bs = Bs + Bm;
-        cv::reduce(Bs, Bs, 1, cv::REDUCE_SUM);
+        cv::normalize(Ra,Ra, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Ga,Ga, 0,255, cv::NORM_MINMAX);
+        cv::normalize(Ba,Ba, 0,255, cv::NORM_MINMAX);
 
-        cv::Point position1, position2, position3;
+        Ra.convertTo(Ra, CV_8U);
+        Ga.convertTo(Ga, CV_8U);
+        Ba.convertTo(Ba, CV_8U);
+        Rm.convertTo(Rm, CV_8U);
+        Gm.convertTo(Gm, CV_8U);
+        Bm.convertTo(Bm, CV_8U);
 
-        position1 = getPosition(Rs);
-        position2 = getPosition(Gs);
-        position3 = getPosition(Bs);
+        uint8_t lt[256];
+        for (int i =0; i < 256; i++){
+            float datum = (-128*cos(i*((4*PI)/255)))+128;
+            lt[i] = uint8_t(datum);
+        }
+        cv::Mat lut(256, 1, CV_8U, 1);
 
-        shift = ((position1.y+position2.y+position3.y)/3)*2;
+        cv::LUT(Ra,lut,Ra);
+        cv::LUT(Ga,lut,Ga);
+        cv::LUT(Ba,lut,Ba);
+
+        result = (0.133*Ra) + (0.133*Ga) + (0.133*Ba) + (0.2*Rm) + (0.2*Gm) + (0.2*Bm);
+
+        cv::GaussianBlur(result, result, cv::Size(0,0), 3);
+
+        cv::reduce(result,result,1,cv::REDUCE_AVG);
+
+        position = getPosition(result);
+
+        if (position.y > pos)
+            pos++;
+        else if (position.y < pos)
+            pos--;
+
+        shift = int(pos*2.56);
+
         //std::cout << "\t" << shift << "\t";
         shift = -((shift-(center_cam))*4);
         images->shift = shift;
