@@ -7,7 +7,7 @@ int coffset [] = {
     133,
     113,
     148,
-    108, //114
+     98, //114
     120,
     140,
     110
@@ -191,13 +191,13 @@ void computeMovement(Images *images){
             pos--;
         
         if (images->travel_average.avg < 50)
-            pos = 38;
+            pos = int((float)center_cam/2.56);
 
-        window_offset = 10;
+        window_offset = 0;
 
         shift = int(pos*2.56) + window_offset;
         shift = -((shift-(center_cam))*4);
-        //std::cout << "\t" << pos << "\t" << shift << "\t" << images->travel << "\t";
+        //std::cout << "\t" << pos << "\t" << shift << "\t" << images->travel << "\n";
 
         images->shift = shift;
     }
