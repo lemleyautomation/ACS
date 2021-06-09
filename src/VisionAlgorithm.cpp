@@ -130,7 +130,7 @@ void computeMovement(Images *images){
         images->shift_average.base = 1;
 
         cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
-        cv::GaussianBlur(im, im, cv::Size(0,0), 1);
+        //cv::GaussianBlur(im, im, cv::Size(0,0), 1);
 
         cv::Mat bgr[3];
         cv::split(im,bgr);
@@ -177,9 +177,9 @@ void computeMovement(Images *images){
         cv::LUT(Ga,lut,Ga);
         cv::LUT(Ba,lut,Ba);
 
-        result = (0.133*Ra) + (0.133*Ga) + (0.133*Ba) + (0.2*Rm) + (0.2*Gm) + (0.2*Bm);
+        result = /*(0.133*Ra) + (0.133*Ga) + (0.133*Ba) + */(0.2*Rm) + (0.2*Gm) + (0.2*Bm);
 
-        cv::GaussianBlur(result, result, cv::Size(0,0), 3);
+        //cv::GaussianBlur(result, result, cv::Size(0,0), 3);
 
         cv::reduce(result,result,1,cv::REDUCE_AVG);
 
@@ -189,11 +189,16 @@ void computeMovement(Images *images){
             pos++;
         else if (position.y < pos)
             pos--;
+        
+        if (images->travel_average.avg < 50)
+            pos = 38;
 
-        shift = int(pos*2.56);
+        window_offset = 10;
 
-        //std::cout << "\t" << shift << "\t";
+        shift = int(pos*2.56) + window_offset;
         shift = -((shift-(center_cam))*4);
+        //std::cout << "\t" << pos << "\t" << shift << "\t" << images->travel << "\t";
+
         images->shift = shift;
     }
     else if (images->program == 5){
