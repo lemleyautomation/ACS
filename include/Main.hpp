@@ -123,7 +123,6 @@ struct Tags{
 };
 
 void getMovement(Images *local_set);
-cv::Mat findAngles(cv::Mat image, float binning = 0.5);
 #endif
 
 //wut

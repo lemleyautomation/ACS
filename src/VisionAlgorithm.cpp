@@ -4,27 +4,14 @@ int coffset [] = {
     0,
     128,
     142,
-    133,
+    140,
     113,
-    148,
-    108, //114
+    138,
+    108,
     130,
     140,
     110
 };
-
-cv::Mat findAngles(cv::Mat image, float binning){
-    cv::Mat sobelx, sobely, magnitudes, angles;
-
-    cv::Sobel(image, sobelx, CV_32F, 1, 0, 1);
-    cv::Sobel(image, sobely, CV_32F, 0, 1, 1);
-    cv::cartToPolar(sobelx, sobely, magnitudes, angles, true);
-
-    cv::resize(angles, angles, cv::Size(), binning, binning, cv::INTER_AREA );
-
-    return angles;
-}
-
 
 double val_min, val_max;
 cv::Point getPosition(cv::Mat &search){
@@ -33,35 +20,15 @@ cv::Point getPosition(cv::Mat &search){
     return loc_max;
 }
 
-bool confidence(Images *images, cv::Mat&result){
-    float scale_factor = 0.5;
-    cv::Mat heat_graph, image, templat;
-    cv::resize( images->current_image, image, cv::Size(), scale_factor, scale_factor );
-    cv::resize( images->previous_image, templat, cv::Size(), scale_factor, scale_factor );
-    cv::matchTemplate(image, templat, heat_graph, cv::TM_CCOEFF_NORMED);
-    float similarity = heat_graph.at<float>(0,0);
-
-    int rows = result.rows;
-    cv::normalize(result, result, 0, 1, cv::NORM_MINMAX);
-    cv::reduce(result, result, 0, cv::REDUCE_SUM);
-    float noise = result.at<float>(0,0)/rows;
-    noise = 1/(noise*10);
-
-    float similarity_weight = 0.5;
-    float noise_weight = 1;
-
-    float confidence_value = (similarity*similarity_weight)+(noise*noise_weight);
-
-    //std::cout << std::fixed;
-    //std::cout << std::setprecision(2);
-    //std::cout << "\t" << val_max << "\t" << similarity << "\t" << noise << "\t" << confidence_value << std::endl;
-
-    // tufted: >0.4 >0.7
-
-    if (images->program == 1)
-        return (confidence_value>0.2);
-    else
-        return (confidence_value>0.61);
+void processChanel(cv::Mat channel, cv::Mat& magnitude, cv::Mat& angle){
+    cv::Mat x,y;
+    cv::Sobel(channel, x, CV_32F, 1, 0, 1);
+    cv::Sobel(channel, y, CV_32F, 0, 1, 1);
+    cv::cartToPolar(x, y, magnitude, angle, true);
+    cv::normalize(magnitude, magnitude, 0,255, cv::NORM_MINMAX);
+    cv::normalize(angle, angle, 0,255, cv::NORM_MINMAX);
+    magnitude.convertTo(magnitude, CV_8U);
+    angle.convertTo(angle, CV_8U);
 }
 
 void computeSpeed(Images *images){
@@ -83,18 +50,17 @@ void computeSpeed(Images *images){
     images->travel = travel*4;
 }
 
-int stack_head = 0;
-int stack_base = 7;
-std::vector<cv::Mat> image_stack(stack_base);
-cv::Mat stacked = cv::Mat::zeros(256, 320, CV_8UC3);
-bool full_stack = false;
-
 float pos = 50;
 
 void computeMovement(Images *images){
     computeSpeed(images);
 
-    cv::Mat angles, result, result1, result2, im, tm, sobely, sobelx, magnitudes;
+    cv::Mat result, im, tm;
+
+    cv::Mat bgr[3];
+    cv::Mat Rm,Ra;
+    cv::Mat Gm,Ga;
+    cv::Mat Bm,Ba;
 
     int center_cam = coffset[images->module_number];
     int window_offset = 0;
@@ -113,47 +79,19 @@ void computeMovement(Images *images){
         window_offset = 25;
         shift = (position.y+window_offset);
         shift = -((shift-center_cam)*4);
+        images->shift = shift;
         //std::cout << "Tufted" << std::endl;
     }
     else if (images->program == 2){
         images->shift_average.base = 1;
 
         cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
-        //cv::GaussianBlur(im, im, cv::Size(0,0), 1);
-
-        cv::Mat bgr[3];
+        
         cv::split(im,bgr);
 
-        cv::Mat Rx,Ry,Rm,Ra,Rs;
-        cv::Mat Gx,Gy,Gm,Ga,Gs;
-        cv::Mat Bx,By,Bm,Ba,Bs;
-
-        cv::Sobel(bgr[0], Rx, CV_32F, 1, 0, 1);
-        cv::Sobel(bgr[0], Ry, CV_32F, 0, 1, 1);
-        cv::cartToPolar(Rx, Ry, Rm, Ra, true);
-
-        cv::Sobel(bgr[1], Gx, CV_32F, 1, 0, 1);
-        cv::Sobel(bgr[1], Gy, CV_32F, 0, 1, 1);
-        cv::cartToPolar(Gx, Gy, Gm, Ga, true);
-
-        cv::Sobel(bgr[2], Bx, CV_32F, 1, 0, 1);
-        cv::Sobel(bgr[2], By, CV_32F, 0, 1, 1);
-        cv::cartToPolar(Bx, By, Bm, Ba, true);
-
-        cv::normalize(Rm,Rm, 0,255, cv::NORM_MINMAX);
-        cv::normalize(Gm,Gm, 0,255, cv::NORM_MINMAX);
-        cv::normalize(Bm,Bm, 0,255, cv::NORM_MINMAX);
-
-        cv::normalize(Ra,Ra, 0,255, cv::NORM_MINMAX);
-        cv::normalize(Ga,Ga, 0,255, cv::NORM_MINMAX);
-        cv::normalize(Ba,Ba, 0,255, cv::NORM_MINMAX);
-
-        Ra.convertTo(Ra, CV_8U);
-        Ga.convertTo(Ga, CV_8U);
-        Ba.convertTo(Ba, CV_8U);
-        Rm.convertTo(Rm, CV_8U);
-        Gm.convertTo(Gm, CV_8U);
-        Bm.convertTo(Bm, CV_8U);
+        processChanel(bgr[0],Rm,Ra);
+        processChanel(bgr[1],Gm,Ga);
+        processChanel(bgr[2],Bm,Ba);
 
         uint8_t lt[256];
         for (int i =0; i < 256; i++){
@@ -260,18 +198,11 @@ void computeMovement(Images *images){
         window_offset = 10;
 
         shift = int(pos*2.56) + window_offset;
-        std::cout << "\t" << position.y << "\t" << shift << "\n";
+        //std::cout << "\t" << position.y << "\t" << shift << "\n";
         shift = -((shift-(center_cam))*4);
 
         images->shift = shift;
     }
-
-    //std::cout << shift << std::endl;
-
-    if (true)//confidence(images,result))
-        images->shift = shift;
-    else
-        images->shift = 0;
 }
 
 bool loaded = false;

@@ -4,9 +4,6 @@ CameraPtr camera_pointer;
 
 void newPattern(){
     images.pattern_image = images.current_image.clone();
-    cv::Mat im;
-    cv::cvtColor(images.pattern_image, im, cv::COLOR_BGR2GRAY);
-    images.pattern_angles = findAngles(im);
     cv::imwrite("Pattern_new.Bmp", images.pattern_image);
 }
 
@@ -65,12 +62,6 @@ int get_new_image (CameraPtr pCam, int module){
 
 int startCamera(moduleSettings mset){
     images.pattern_image = cv::imread("Pattern_new.Bmp");
-    cv::Mat im;
-    cv::cvtColor(images.pattern_image, im, cv::COLOR_BGR2GRAY);
-    images.pattern_angles = findAngles(im);
-    cv::Mat synthetic_template = cv::imread("syntemp.Bmp", cv::IMREAD_GRAYSCALE);
-    synthetic_template.convertTo(images.synthetic_template, CV_32F);
-    cv::flip(images.synthetic_template, images.synthetic_template_inverted, 0);
     
     FlirSystem = System::GetInstance();
     camera_list = FlirSystem->GetCameras();
