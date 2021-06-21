@@ -32,9 +32,6 @@ void stopMessaging(){
 	close(sockfd);
 }
 
-bool program1 = false;
-bool program2 = false;
-bool program3 = false;
 void sendMessage(Tags tags){
 
 	uint8_t deviation = abs(tags.deviation*100);
@@ -45,37 +42,27 @@ void sendMessage(Tags tags){
 	bits[1] = tags.cam_status;
 	bits[2] = tags.drive_status;
 	bits[3] = tags.underspeed;
-	bits[4] = (tags.deviation<0);
-	bits[5] = program1;
-	bits[6] = program2;
-	bits[7] = program3;
+	bits[4] = 0;
+	bits[5] = (images.program==1);
+	bits[6] = (images.program==2);
+	bits[7] = (images.program==3);
 	status = bits.to_ulong();
 
 	char hello[] = { 'B', (char)tags.module_number, deviation, speed, status, 'E' };
 
 	unsigned int len;
-
 	int n = sendto(sockfd, (const char *)hello, 6, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
 	
 	char buffer[100];
 	int r = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
 	
-	if (r != 3){
-		//std::cout << "receive timeout, sent: " << n << std::endl;
+	//std::cout << "recieved message of " << r << " bytes: " << buffer[0] << " " << int(buffer[1]) << " " << (int)buffer[2] << std::endl;
+
+	if (r <= 1){
 		images.program = 1;
 	}
 	else{
 		images.program = (int)buffer[1];
-		program1 = 0;
-		program2 = 0;
-		program3 = 0;
-		if (images.program == 1)
-			program1 = 1;
-		if (images.program == 2)
-			program2 = 1;
-		if (images.program == 3)
-			program3 = 1;
+		images.trim = (int)buffer[2];
 	}
-	
-	//std::cout << "selected program: " << (int)buffer[1] << "\t";// << std::endl;
 }

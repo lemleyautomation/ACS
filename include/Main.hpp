@@ -35,7 +35,7 @@ using namespace Spinnaker::GenICam;
 
 #include <modbus.h>
 
-const int ppi = 312;
+const int ppi = 300;
 
 struct moduleSettings{
     int module_number = 0;
@@ -91,9 +91,6 @@ struct Images{
     cv::Mat current_image;
     cv::Mat previous_image;
     cv::Mat pattern_image;
-    cv::Mat pattern_angles;
-    cv::Mat synthetic_template;
-    cv::Mat synthetic_template_inverted;
     std::chrono::time_point<std::chrono::system_clock> c_stamp;
     std::chrono::time_point<std::chrono::system_clock> p_stamp;
 
@@ -108,6 +105,7 @@ struct Images{
 
     int program = 1;
     int module_number = 0;
+    int trim = 0;
 };
 
 struct Tags{

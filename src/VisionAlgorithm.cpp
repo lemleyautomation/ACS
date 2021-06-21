@@ -67,7 +67,7 @@ void computeMovement(Images *images){
     cv::Point position;
     int shift = 0;
 
-    //images->program = 4;
+    //images->program = 3;
 
     if (images->program == 1){
         images->shift_average.base = 7;
@@ -83,7 +83,7 @@ void computeMovement(Images *images){
         //std::cout << "Tufted" << std::endl;
     }
     else if (images->program == 2){
-        images->shift_average.base = 1;
+        images->shift_average.base = 4;
 
         cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
         
@@ -129,7 +129,7 @@ void computeMovement(Images *images){
         images->shift = shift;
     }
     else{
-        images->shift_average.base = 1;
+        images->shift_average.base = 4;
 
         cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
         cv::GaussianBlur(im, im, cv::Size(0,0), 1);
@@ -161,12 +161,12 @@ void computeMovement(Images *images){
         cv::normalize(Ga,Ga, 0,255, cv::NORM_MINMAX);
         cv::normalize(Ba,Ba, 0,255, cv::NORM_MINMAX);
 
-        Ra.convertTo(Ra, CV_8U);
-        Ga.convertTo(Ga, CV_8U);
-        Ba.convertTo(Ba, CV_8U);
-        Rm.convertTo(Rm, CV_8U);
-        Gm.convertTo(Gm, CV_8U);
-        Bm.convertTo(Bm, CV_8U);
+        Ra.convertTo(Ra, CV_64F);
+        Ga.convertTo(Ga, CV_64F);
+        Ba.convertTo(Ba, CV_64F);
+        Rm.convertTo(Rm, CV_64F);
+        Gm.convertTo(Gm, CV_64F);
+        Bm.convertTo(Bm, CV_64F);
 
         uint8_t lt[256];
         for (int i =0; i < 256; i++){
@@ -179,17 +179,21 @@ void computeMovement(Images *images){
         cv::LUT(Ga,lut,Ga);
         cv::LUT(Ba,lut,Ba);
         
-        result = (0.32*Ra) + (0.167*Ga) + (0.167*Ba) + (0.167*Rm) + (0.167*Gm) + (0.167*Bm);
+        result = (Rm*Ra) + (Gm*Ga) + (Bm*Ba);
 
         //cv::GaussianBlur(result, result, cv::Size(0,0), 1);
 
         cv::reduce(result,result,1,cv::REDUCE_AVG);
 
-        position = getPosition(result);
+        int margin = 5;
+        cv::Rect edge_trim( 0, margin, result.cols, result.rows-margin);
+        cv::Mat r1 = result(edge_trim).clone();
 
-        if (position.y > pos)
+        position = getPosition(r1);
+
+        if (position.y+margin > pos)
             pos++;
-        else if (position.y < pos)
+        else if (position.y+margin < pos)
             pos--;
         
         if (images->travel_average.avg < 50)
@@ -203,6 +207,8 @@ void computeMovement(Images *images){
 
         images->shift = shift;
     }
+
+    //images->shift += images->trim;
 }
 
 bool loaded = false;
