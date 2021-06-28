@@ -7,7 +7,7 @@ int coffset [] = {
     140,
     113,
     138,
-    108,
+    128,
     130,
     140,
     110
@@ -67,7 +67,7 @@ void computeMovement(Images *images){
     cv::Point position;
     int shift = 0;
 
-    //images->program = 3;
+    images->program = 2;
 
     if (images->program == 1){
         images->shift_average.base = 7;
@@ -123,7 +123,7 @@ void computeMovement(Images *images){
         window_offset = 0;
 
         shift = int(pos*2.56) + window_offset;
-        //std::cout << "\t" << position.y << "\t" << shift << "\n";
+        //std::cout << "\t" << position.y << "\t" << shift << "\t";
         shift = -((shift-(center_cam))*4);
 
         images->shift = shift;
@@ -161,9 +161,9 @@ void computeMovement(Images *images){
         cv::normalize(Ga,Ga, 0,255, cv::NORM_MINMAX);
         cv::normalize(Ba,Ba, 0,255, cv::NORM_MINMAX);
 
-        Ra.convertTo(Ra, CV_64F);
-        Ga.convertTo(Ga, CV_64F);
-        Ba.convertTo(Ba, CV_64F);
+        Ra.convertTo(Ra, CV_8U);
+        Ga.convertTo(Ga, CV_8U);
+        Ba.convertTo(Ba, CV_8U);
         Rm.convertTo(Rm, CV_64F);
         Gm.convertTo(Gm, CV_64F);
         Bm.convertTo(Bm, CV_64F);
@@ -179,6 +179,10 @@ void computeMovement(Images *images){
         cv::LUT(Ga,lut,Ga);
         cv::LUT(Ba,lut,Ba);
         
+        Rm.convertTo(Ra, CV_64F);
+        Gm.convertTo(Ga, CV_64F);
+        Bm.convertTo(Ba, CV_64F);
+        
         result = (Rm*Ra) + (Gm*Ga) + (Bm*Ba);
 
         //cv::GaussianBlur(result, result, cv::Size(0,0), 1);
@@ -189,7 +193,7 @@ void computeMovement(Images *images){
         cv::Rect edge_trim( 0, margin, result.cols, result.rows-margin);
         cv::Mat r1 = result(edge_trim).clone();
 
-        position = getPosition(r1);
+        position = getPosition(result);
 
         if (position.y+margin > pos)
             pos++;
@@ -201,8 +205,9 @@ void computeMovement(Images *images){
 
         window_offset = 10;
 
-        shift = int(pos*2.56) + window_offset;
-        //std::cout << "\t" << position.y << "\t" << shift << "\n";
+        shift = int(position.y*2.56);
+        //shift = int(pos*2.56) + window_offset;
+        //std::cout << "\t" << position.y << "\t" << shift << "\t";
         shift = -((shift-(center_cam))*4);
 
         images->shift = shift;
