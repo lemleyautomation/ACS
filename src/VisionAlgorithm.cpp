@@ -6,7 +6,7 @@ int coffset [] = {
     142,
     140,
     113,
-    138,
+    128,
     128,
     130,
     140,
@@ -66,8 +66,6 @@ void computeMovement(Images *images){
     int window_offset = 0;
     cv::Point position;
     int shift = 0;
-
-    images->program = 2;
 
     if (images->program == 1){
         images->shift_average.base = 7;
@@ -193,21 +191,23 @@ void computeMovement(Images *images){
         cv::Rect edge_trim( 0, margin, result.cols, result.rows-margin);
         cv::Mat r1 = result(edge_trim).clone();
 
-        position = getPosition(result);
+        position = getPosition(r1);
 
-        if (position.y+margin > pos)
+        position.y += (margin*2);
+
+        if (position.y > pos)
             pos++;
-        else if (position.y+margin < pos)
+        else if (position.y < pos)
             pos--;
         
         if (images->travel_average.avg < 50)
             pos = int((float)center_cam/2.56);
 
-        window_offset = 10;
+        window_offset = 0;
 
-        shift = int(position.y*2.56);
-        //shift = int(pos*2.56) + window_offset;
-        //std::cout << "\t" << position.y << "\t" << shift << "\t";
+        //shift = int(position.y*2.56) + window_offset;
+        shift = int(pos*2.56) + window_offset;
+        //std::cout << "\t" << position.y << "\t" << shift << "\t" << pos << "\n";
         shift = -((shift-(center_cam))*4);
 
         images->shift = shift;
@@ -235,5 +235,5 @@ void getMovement(Images *local_set){
         end_comp = std::chrono::system_clock::now();
 
     std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
-    //std::cout << " dF: " << dF.count() << " dC: " << dV.count() << " " << std::endl;
+    //std::cout << " dF: " << dF.count() << " dC: " << dV.count() << " " << local_set->program << std::endl;
 }
