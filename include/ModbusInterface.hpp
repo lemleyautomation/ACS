@@ -128,9 +128,9 @@ float varySpeed(float travel, int frame_gap){
     float speed_factor = ((((float)travel/(float)ppi)/((float)frame_gap*0.001))*5)/200;
     //speed_factor = 1; // FOR TESTING PURPOSES
     // based on trial and erro, the acce/decel at 200 feet per minute should be 4 inches / second / second
-    float acceleration = 3;//4.0*speed_factor;
-    float deceleration = 3;//4.0*speed_factor;
-    float servo_speed  =  1.5;//2.0*speed_factor;
+    float acceleration = 4;//4.0*speed_factor;
+    float deceleration = 4;//4.0*speed_factor;
+    float servo_speed  =  2;//2.0*speed_factor;
     toUint(_4x, 21, acceleration); // accel
     toUint(_4x, 25, deceleration); // decel
     toUint(_4x, 29,  servo_speed); // speed
