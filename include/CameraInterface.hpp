@@ -60,7 +60,7 @@ int get_new_image (CameraPtr pCam, int module){
     return 0;
 }
 
-int startCamera(moduleSettings mset){
+int startCamera(){
     images.pattern_image = cv::imread("Pattern_new.Bmp");
     
     FlirSystem = System::GetInstance();
@@ -75,7 +75,7 @@ int startCamera(moduleSettings mset){
 
     camera_pointer = nullptr;
     int result = 0;
-    camera_pointer = camera_list.GetBySerial(mset.serial_number);
+    camera_pointer = camera_list.GetBySerial(tags.serial_number);
 
     if (camera_pointer == nullptr){
         std::cout << "camera connection failure" << std::endl;
@@ -95,8 +95,8 @@ int startCamera(moduleSettings mset){
     
     std::cout << "acquiring" << std::endl;
 
-    get_new_image(camera_pointer, mset.module_number);
-    get_new_image(camera_pointer, mset.module_number);
+    get_new_image(camera_pointer, tags.module_number);
+    get_new_image(camera_pointer, tags.module_number);
 
     return 0;
 }

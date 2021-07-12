@@ -1,0 +1,14 @@
+[Unit]
+Description=Antioch Coater Slitter Server
+After=multi-user.target
+
+[Service]
+Type=idle
+User=pi
+WorkingDirectory=/home/pi/Desktop/ACS/python_files
+ExecStart=python3 /home/pi/Desktop/ACS/python_files/comms.py
+Restart=always
+RestartSec=1s
+
+[Install]
+WantedBy=multi-user.target

@@ -3,9 +3,7 @@
 
 CMakeFiles/ACS.dir/src/Main.cpp.o: ../include/CameraInterface.hpp
 CMakeFiles/ACS.dir/src/Main.cpp.o: ../include/Main.hpp
-CMakeFiles/ACS.dir/src/Main.cpp.o: ../include/ModbusInterface.hpp
 CMakeFiles/ACS.dir/src/Main.cpp.o: ../include/SocketClient.hpp
-CMakeFiles/ACS.dir/src/Main.cpp.o: ../include/SocketServer.hpp
 CMakeFiles/ACS.dir/src/Main.cpp.o: ../src/Main.cpp
 CMakeFiles/ACS.dir/src/Main.cpp.o: /usr/local/include/modbus/modbus-rtu.h
 CMakeFiles/ACS.dir/src/Main.cpp.o: /usr/local/include/modbus/modbus-tcp.h

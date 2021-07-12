@@ -37,18 +37,17 @@ using namespace Spinnaker::GenICam;
 
 const int ppi = 300;
 
-struct moduleSettings{
-    int module_number = 0;
-    const char *servos[9] = { "192.168.1.31",
-                                "192.168.1.32",
-                                "192.168.1.33",
-                                "192.168.1.34",
-                                "192.168.1.35",
-                                "192.168.1.36",
-                                "192.168.1.37",
-                                "192.168.1.38",
-                                "192.168.1.39"};
-    std::string serial_number;
+static int camera_offsets [] = {
+    0,
+    128,
+    142,
+    140,
+    113,
+    128,
+    128,
+    130,
+    140,
+    110
 };
 
 struct RollingAverage{
@@ -94,30 +93,38 @@ struct Images{
     std::chrono::time_point<std::chrono::system_clock> c_stamp;
     std::chrono::time_point<std::chrono::system_clock> p_stamp;
 
+    int center_cam;
+    int program = 1;
+    int trim = 0;
+
     int shift;
-    int shift_fallback;
     RollingAverage shift_average;
 
     int travel;
     RollingAverage travel_average;
 
     int frame_gap;
-
-    int program = 1;
-    int module_number = 0;
-    int trim = 0;
 };
 
 struct Tags{
     float deviation;
     float speed;
-    bool underspeed = true;
-    bool status = false;
-    bool cam_status = false;
-    bool drive_status = false;
     bool shutdown = false;
-    bool tufted = false;
-    unsigned int module_number;
+    
+    int program = 1;
+    int trim = 0;
+
+    int module_number = 0;
+    const char *servos[9] = { "192.168.1.31",
+                                "192.168.1.32",
+                                "192.168.1.33",
+                                "192.168.1.34",
+                                "192.168.1.35",
+                                "192.168.1.36",
+                                "192.168.1.37",
+                                "192.168.1.38",
+                                "192.168.1.39"};
+    std::string serial_number;
 };
 
 void getMovement(Images *local_set);

@@ -1,18 +1,5 @@
 #include "Main.hpp"
 
-int coffset [] = {
-    0,
-    128,
-    142,
-    140,
-    113,
-    128,
-    128,
-    130,
-    140,
-    110
-};
-
 double val_min, val_max;
 cv::Point getPosition(cv::Mat &search){
     cv::Point loc_min, loc_max;
@@ -62,21 +49,18 @@ void computeMovement(Images *images){
     cv::Mat Gm,Ga;
     cv::Mat Bm,Ba;
 
-    int center_cam = coffset[images->module_number];
-    int window_offset = 0;
     cv::Point position;
     int shift = 0;
 
     if (images->program == 1){
         images->shift_average.base = 7;
-        cv::Rect roi( 0, (center_cam)-25, images->pattern_image.cols, 50);
+        cv::Rect roi( 0, (images->center_cam)-25, images->pattern_image.cols, 50);
         cv::resize(images->current_image, im, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
         cv::resize(images->pattern_image(roi), tm, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
         cv::matchTemplate(im, tm, result, cv::TM_CCOEFF_NORMED);
         position = getPosition(result);
-        window_offset = 25;
-        shift = (position.y+window_offset);
-        shift = -((shift-center_cam)*4);
+        shift = (position.y+images->trim);
+        shift = -((shift-images->center_cam)*4);
         images->shift = shift;
         //std::cout << "Tufted" << std::endl;
     }
@@ -116,13 +100,11 @@ void computeMovement(Images *images){
             pos--;
         
         if (images->travel_average.avg < 50)
-            pos = int((float)center_cam/2.56);
+            pos = int((float)images->center_cam/2.56);
 
-        window_offset = 0;
-
-        shift = int(pos*2.56) + window_offset;
-        //std::cout << "\t" << position.y << "\t" << shift << "\t";
-        shift = -((shift-(center_cam))*4);
+        shift = int(pos*2.56) + images->trim;
+        //std::cout << "\t" << position.y << "\t" << shift << "\n";
+        shift = -((shift-(images->center_cam))*4);
 
         images->shift = shift;
     }
@@ -201,14 +183,12 @@ void computeMovement(Images *images){
             pos--;
         
         if (images->travel_average.avg < 50)
-            pos = int((float)center_cam/2.56);
-
-        window_offset = 0;
+            pos = int((float)images->center_cam/2.56);
 
         //shift = int(position.y*2.56) + window_offset;
-        shift = int(pos*2.56) + window_offset;
+        shift = int(pos*2.56) + images->trim;
         //std::cout << "\t" << position.y << "\t" << shift << "\t" << pos << "\n";
-        shift = -((shift-(center_cam))*4);
+        shift = -((shift-(images->center_cam))*4);
 
         images->shift = shift;
     }
@@ -233,6 +213,8 @@ void getMovement(Images *local_set){
         loaded = true;
         ///////////////////////////////////////////////////////////////////////////////////////
         end_comp = std::chrono::system_clock::now();
+
+    //std::cout << local_set->shift << "\t" << local_set->travel << "\t";
 
     std::chrono::milliseconds dV = std::chrono::duration_cast<std::chrono::milliseconds>(end_comp-start_comp);
     //std::cout << " dF: " << dF.count() << " dC: " << dV.count() << " " << local_set->program << std::endl;

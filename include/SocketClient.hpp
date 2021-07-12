@@ -2,67 +2,73 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
-#define PORT	 8080
-#define MAXLINE 1024
+int server_socket_id;
+struct sockaddr_in server_socket;
 
-int sockfd;
-struct sockaddr_in	 servaddr;
-
-void startMessaging(){
-	if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
-		perror("socket creation failed");
-		exit(EXIT_FAILURE);
+bool tcpStart(){
+	server_socket_id = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_socket_id == -1){
+		std::cout << "socket creation failed" << std::endl;
+		return false;
 	}
+	
+	memset(&server_socket, 0, sizeof(server_socket));
+	server_socket.sin_family = AF_INET;
+    server_socket.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server_socket.sin_port = htons(8079);
 
-	char buffer[MAXLINE];
-	memset(&servaddr, 0, sizeof(servaddr));
-	servaddr.sin_addr.s_addr = inet_addr("192.168.1.21");
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(PORT);
+	int connection_status = connect(server_socket_id, (struct sockaddr*)&server_socket, sizeof(server_socket));
+	if (connection_status == -1){
+		std::cout << "socket connection failed" << std::endl;
+		return false;
+	}
 
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = 3000;
-	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+	if (setsockopt(server_socket_id, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
 		perror("Error");
 	}
+
+	return true;
 }
-void stopMessaging(){
-	close(sockfd);
+
+void tcpStop(){
+	close(server_socket_id);
+}
+void tcpReset(){
+	tcpStop();
+	tcpStart();
 }
 
-void sendMessage(Tags tags){
+void tcpUpdate(){
 
-	uint8_t deviation = abs(tags.deviation*100);
-	uint8_t speed = tags.speed*100;
-	uint8_t status = 0;
-	std::bitset<8> bits(status);
-	bits[0] = tags.status;
-	bits[1] = tags.cam_status;
-	bits[2] = tags.drive_status;
-	bits[3] = tags.underspeed;
-	bits[4] = 0;
-	bits[5] = (images.program==1);
-	bits[6] = (images.program==2);
-	bits[7] = (images.program==3);
-	status = bits.to_ulong();
+	std::stringstream tcpMessage;
+	tcpMessage << tags.module_number << ':' << tags.deviation << ':' << tags.speed << ':' << tags.program << "M";
+	char formatted_message[tcpMessage.str().length()+1];
+	strcpy(formatted_message, tcpMessage.str().c_str());
 
-	char hello[] = { 'B', (char)tags.module_number, deviation, speed, status, 'E' };
-
-	unsigned int len;
-	int n = sendto(sockfd, (const char *)hello, 6, MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+	//std::cout << tcpMessage.str() << std::endl;
 	
-	char buffer[100];
-	int r = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
+	write(server_socket_id, formatted_message, sizeof(formatted_message));
 	
-	//std::cout << "recieved message of " << r << " bytes: " << buffer[0] << " " << int(buffer[1]) << " " << (int)buffer[2] << std::endl;
+	char response[100];
+	int number_of_bytes_read = read(server_socket_id, response, sizeof(response));
 
-	if (r <= 1){
-		images.program = 1;
+	if (number_of_bytes_read >= 3){
+		tags.program = int(response[1]);
+		if (int(response[2]) > 128){
+			tags.trim = int(response[2]) - 256;
+		}
+		else{
+			tags.trim = int(response[2]);
+		}
 	}
-	else{
-		images.program = (int)buffer[1];
-		images.trim = (int)buffer[2];
+	else if (number_of_bytes_read <= 0){
+		std::cout << "lost connection, resetting." << std::endl;
+		tcpReset();
 	}
 }

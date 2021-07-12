@@ -67,16 +67,13 @@ int configure_servo(){
     x[1] = modbus_read_registers(ctx_servo, 0, 54, _4x) - 54;
     std::cout << x[1] << "...";
 
-    toUint(_4x, 21, 4.0); // accel
-    toUint(_4x, 25, 4.0); // decel
-    toUint(_4x, 29,  2.0); // speed
-    _4x[48] = 2;
-    _4x[51] = 1;
+    setBit(_4x,1,2,1); // set home to HIGH
+    setBit(_4x,1,0,0); // set ServoOn  to LOW
 
-    setBit(_4x,1,2,1);
-    setBit(_4x,1,0,0);
-
+    _4x[48] = 2; // resolution
     _4x[49] = 1; // homing type
+    _4x[51] = 1; // move type
+
     _4x[18] = _3x[48]; // ...
     _4x[19] = _3x[49]; // home position to current position
 
@@ -85,8 +82,9 @@ int configure_servo(){
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    setBit(_4x, 1, 2, 0);
-    setBit(_4x, 1, 0, 0);
+    setBit(_4x, 1, 2, 0); // set Home to LOW
+    setBit(_4x, 1, 0, 0); // set ServoOn to LOW
+
     x[3] = modbus_write_registers(ctx_servo, 0, 54, _4x) - 54;
     std::cout << x[3] << "...";
     time_since_move = std::chrono::system_clock::now();
@@ -108,7 +106,6 @@ void updateServo(){
         toUint(_4x, 37, servo_position_command);                                             //
         //***********************************************************************************//
     
-        sendMessage(tags);
     }
     toggle = (toggle+1)%3;
 
