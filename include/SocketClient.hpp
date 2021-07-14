@@ -47,7 +47,7 @@ void tcpReset(){
 void tcpUpdate(){
 
 	std::stringstream tcpMessage;
-	tcpMessage << tags.module_number << ':' << tags.deviation << ':' << tags.speed << ':' << tags.program << "M";
+	tcpMessage << tags.module_number << ':' << tags.deviation << ':' << tags.speed << ':' << tags.program << ':' << tags.trim << "M";
 	char formatted_message[tcpMessage.str().length()+1];
 	strcpy(formatted_message, tcpMessage.str().c_str());
 
@@ -66,6 +66,7 @@ void tcpUpdate(){
 		else{
 			tags.trim = int(response[2]);
 		}
+		//std::cout << tags.program << "\t" << tags.trim << std::endl;
 	}
 	else if (number_of_bytes_read <= 0){
 		std::cout << "lost connection, resetting." << std::endl;

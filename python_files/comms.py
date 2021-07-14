@@ -18,6 +18,15 @@ servo.connect()
 servo_3x_words = servo.read_input_registers(0,54) #register 0, 54 words
 servo_4x_words = servo.read_registers(0,54) #register 0, 54 words
 
+try:
+    tag_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tag_server.settimeout(0.025)
+    tag_server.connect(('192.168.1.21', 8080))
+    tag_server.sendall('hello'.encode('utf-8'))
+    #command_tags = tag_server.recv(100)
+except:
+    pass
+
 servo_4x_words[0] = clear_bit(servo_4x_words[0], 0)   # make sure servo is off
 servo_4x_words[0] = set_bit(servo_4x_words[0], 2)     # start homing
 servo_4x_words[48] = 2                                  # servo decimal places
@@ -38,6 +47,7 @@ servo.write_registers(0,servo_4x_words)
 heartbeat_timeout = time()
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_address = ('127.0.0.1', 8079)
 server_socket.bind(server_address)
 server_socket.listen(1)
@@ -46,15 +56,17 @@ while True:
     connection, client_address = server_socket.accept()
     try:
         even_loop = True
+        coded_message = 'hello'.encode('utf-8')
+        command_tags  = 'B20E'.encode('utf-8')
         while True:
             try:
-                message = connection.recv(100)
+                coded_message = connection.recv(100)
             except:
                 break
-            if message:
+            if coded_message:
                 # these messages are coming from the vision program running on this same pc
                 # a message looks like this: "6:1.23:0.1234:2:M"
-                message = message.decode('utf-8')   # convert from internet freindly byte array to string.
+                message = coded_message.decode('utf-8')   # convert from internet freindly byte array to string.
                 message = message.split('M')        # the string may have multiple messages.
                 message = message[0]                # Only the first one is likely to be uncorrupted
                 message = message.split(':')        # split message into its separate variables
@@ -70,15 +82,9 @@ while True:
                     #print(message)
                 except:
                     pass
-
-                response = bytearray("B00E", 'utf-8') # prepare an internet friendly byte array
-                response[1] = program
-                if trim < 0:
-                    response[2] = 256 + trim
-                else:
-                    response[2] = trim
-                connection.sendall(response) # send the vision program some commands
                 
+                connection.sendall(command_tags)
+
                 try:
                     limit_switch_response = limit_switch.read_registers(31,1)[0] #register 31, single word
                     limit_switch_status = get_bit(limit_switch_response, module_number-1)
@@ -122,12 +128,31 @@ while True:
                     servo.close()
                     servo = mod.ModbusTcp(ip=("192.168.1.3" + str(module_number)), port=502)
                     servo.connect()
-                
+                try:
+                    #print ('sending tags')
+                    tag_server.sendall(coded_message)
+                except:
+                    print ('tag server lost conection')
+                    try:
+                        tag_server.close()
+                        tag_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        tag_server.settimeout(0.025)
+                        tag_server.connect(('192.168.1.21', 8080))
+                        print('tag server reconnected')
+                    except:
+                        pass
+                try:
+                    command_tags = tag_server.recv(100)
+                    print(command_tags)
+                except:
+                    print('tags not recieved')
+                    pass
             else:
                 break
     finally:
         connection.close()
 
+tag_server.close()
 limit_switch.close()
 servo.close()
 print("done")
