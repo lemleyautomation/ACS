@@ -143,7 +143,7 @@ while True:
                         pass
                 try:
                     command_tags = tag_server.recv(100)
-                    print(command_tags)
+                    #print(command_tags)
                 except:
                     print('tags not recieved')
                     pass
