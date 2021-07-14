@@ -32,7 +32,8 @@ void programLoop(){
             float inches_per_frame = (float)images.travel_average.update(images.travel)/(float)ppi;
             float inches_per_second = inches_per_frame/((float)images.frame_gap*0.001);
             float feet_per_minute = inches_per_second*5.0;
-            tags.speed = feet_per_minute;
+            float speed_percentage = abs( feet_per_minute / 200 );
+            tags.speed = speed_percentage;
         }
 
         end_time = std::chrono::system_clock::now();
