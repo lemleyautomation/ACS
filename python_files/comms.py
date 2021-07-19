@@ -30,7 +30,7 @@ server_socket.listen(1)
 
 even_loop = True
 coded_message = 'hello'.encode('utf-8')
-command_tags  = 'B20E'.encode('utf-8')
+command_tags  = bytearray("B20E", 'utf-8')
 program = 2
 trim = 0
 
@@ -67,6 +67,9 @@ while connection_count < 5:
         tags[4] = current_trim
         program_command = tags[5]
         trim_command = tags[6]
+        command_tags[1] = program_command
+        command_tags[2] = abs( trim_command + (256*(trim_command<0)) )
+        #print(program_command, trim_command)
         tag_lock.release()
 
         connection.sendall(command_tags)

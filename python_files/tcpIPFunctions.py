@@ -170,6 +170,8 @@ def tag_server(tags,lock):
             lock.acquire()
             tags[5] = int(message[0])
             tags[6] = int(message[1])
+            response = str(tags[0]) + ':' + str(tags[1]) + ':' + str(tags[2]) + ':' + str(tags[3])  + ':' + str(tags[4]) + ':M'
+            #print(response)
             lock.release()
         
     return

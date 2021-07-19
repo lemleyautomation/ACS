@@ -53,17 +53,20 @@ void tcpUpdate(){
 	char response[100];
 	int number_of_bytes_read = read(server_socket_id, response, sizeof(response));
 
+	//std::cout << response << std::endl;
+
 	if (number_of_bytes_read >= 3){
-		tags.program = int(response[1]);
-		if (int(response[2]) > 128){
-			tags.trim = int(response[2]) - 256;
+		tags.program = (int)response[1];
+		if (response[2]> 128){
+			tags.trim = response[2] - 256;
 		}
 		else{
-			tags.trim = int(response[2]);
+			tags.trim = response[2];
 		}
 		//std::cout << tags.program << "\t" << tags.trim << std::endl;
 	}
 	else if (number_of_bytes_read <= 0){
+
 		std::cout << "lost connection, resetting." << std::endl;
 		tcpReset();
 	}
