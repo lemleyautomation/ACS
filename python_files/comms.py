@@ -2,19 +2,17 @@ import pylibmodbus as mod
 import numpy as np
 from time import sleep
 from time import time as now
+from threading import Thread, Lock
 import socket
 import sys
 from bitFunctions import get_bit, set_bit, clear_bit, write_bit, write_float, write_32_bit_word, pw
 from tcpIPFunctions import get_IP_address, connect_to_limit_switch, get_switch_status, connect_to_servo, read_servo, configure_servo
 from tcpIPFunctions import get_heartbeat_status, get_heartbeat_response, set_heartbeat_response, set_servo_enable, get_servo_position, set_servo_position, set_start_move
-from tcpIPFunctions import format_message
+from tcpIPFunctions import format_message, tag_server
 
 ip_address = get_IP_address()
 module_number = int(ip_address[-1])
 print("knife #", module_number)
-
-program = 2
-trim = 0
 
 limit_switch = connect_to_limit_switch()
 limit_switch_status, limit_switch = get_switch_status(limit_switch, module_number)
@@ -33,11 +31,18 @@ server_socket.listen(1)
 even_loop = True
 coded_message = 'hello'.encode('utf-8')
 command_tags  = 'B20E'.encode('utf-8')
+program = 2
+trim = 0
 
 connection_count = 0
 while connection_count < 5:
     connection, client_address = server_socket.accept()
     connection_count = connection_count +1
+
+    tags = [0,0,0,0,0,0,0]
+    tag_lock = Lock()
+    tag_server_thread = Thread(target=tag_server, args=(tags,tag_lock))
+    tag_server_thread.start()
         
     while True:
         try:
@@ -49,7 +54,21 @@ while connection_count < 5:
         if module == -1:
             continue
         elif module == -2:
+            tag_lock.acquire()
+            tags[0] = -1
+            tag_lock.release()
             break
+
+        tag_lock.acquire()
+        tags[0] = module
+        tags[1] = deviation
+        tags[2] = speed
+        tags[3] = current_program
+        tags[4] = current_trim
+        program_command = tags[5]
+        trim_command = tags[6]
+        tag_lock.release()
+
         connection.sendall(command_tags)
 
         limit_switch_status, limit_switch = get_switch_status(limit_switch, module_number)
@@ -84,6 +103,6 @@ while connection_count < 5:
         servo.write_registers(0,servo_output_registers)
         #pw((sero_input_registers[44], servo_output_registers[2]))
         
-
 limit_switch.close()
 servo.close()
+tag_server_thread.join()

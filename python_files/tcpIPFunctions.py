@@ -1,6 +1,7 @@
 import pylibmodbus as mod
 import numpy as np
 from time import time, sleep
+from threading import Thread, Lock
 import socket
 import sys
 from bitFunctions import get_bit, set_bit, clear_bit, write_bit, write_float, write_32_bit_word, pw
@@ -123,3 +124,52 @@ def format_message(coded_message):
         return module, deviation, speed, current_program, current_trim
     except:
         return -1, -1, -1, -1, -1
+
+def tag_server(tags,lock):
+    response = "6:-0.1:0.1:2:4:M"
+
+    stop = 0
+    while stop != -1:
+        lock.acquire()
+        stop = tags[0]
+        lock.release()
+
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.settimeout(0.2)
+        try:
+            server.connect(('192.168.1.21', 8080))
+        except:
+            continue
+
+        while stop != -1:
+            lock.acquire()
+            stop = tags[0]
+            lock.release()
+            
+            try:
+                coded_message = server.recv(100)
+            except socket.timeout:
+                continue
+            except:
+                break
+            if len(coded_message) == 0:
+                break
+
+            try:
+                server.sendall(response.encode('utf-8'))
+            except socket.timeout:
+                continue
+            except:
+                break
+
+            message = coded_message.decode('utf-8')   # convert from internet freindly byte array to string.
+            message = message.split('M')        # the string may have multiple messages.
+            message = message[0]                # Only the first one is likely to be uncorrupted
+            message = message.split(':')
+
+            lock.acquire()
+            tags[5] = int(message[0])
+            tags[6] = int(message[1])
+            lock.release()
+        
+    return
