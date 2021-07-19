@@ -14,25 +14,20 @@ bool tcpStart(){
 		std::cout << "socket creation failed" << std::endl;
 		return false;
 	}
-	
 	memset(&server_socket, 0, sizeof(server_socket));
 	server_socket.sin_family = AF_INET;
     server_socket.sin_addr.s_addr = inet_addr("127.0.0.1");
     server_socket.sin_port = htons(8079);
-
-	int connection_status = connect(server_socket_id, (struct sockaddr*)&server_socket, sizeof(server_socket));
-	if (connection_status == -1){
-		std::cout << "socket connection failed" << std::endl;
-		return false;
-	}
-
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = 3000;
 	if (setsockopt(server_socket_id, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
 		perror("Error");
 	}
-
+	int connection_status = connect(server_socket_id, (struct sockaddr*)&server_socket, sizeof(server_socket));
+	if (connection_status == -1){
+		return false;
+	}
 	return true;
 }
 
