@@ -34,15 +34,13 @@ command_tags  = bytearray("B20E", 'utf-8')
 program = 2
 trim = 0
 
-connection_count = 0
-while connection_count < 5:
-    connection, client_address = server_socket.accept()
-    connection_count = connection_count +1
+tags = [0,0,0,0,0,0,0]
+tag_lock = Lock()
+#tag_server_thread = Thread(target=tag_server, args=(tags,tag_lock))
+#tag_server_thread.start()
 
-    tags = [0,0,0,0,0,0,0]
-    tag_lock = Lock()
-    tag_server_thread = Thread(target=tag_server, args=(tags,tag_lock))
-    tag_server_thread.start()
+while True:
+    connection, client_address = server_socket.accept()
         
     while True:
         try:
@@ -54,27 +52,12 @@ while connection_count < 5:
         if module == -1:
             continue
         elif module == -2:
-            tag_lock.acquire()
-            tags[0] = -1
-            tag_lock.release()
             break
-
-        tag_lock.acquire()
-        tags[0] = module
-        tags[1] = deviation
-        tags[2] = speed
-        tags[3] = current_program
-        tags[4] = current_trim
-        program_command = tags[5]
-        trim_command = tags[6]
-        command_tags[1] = program_command
-        command_tags[2] = abs( trim_command + (256*(trim_command<0)) )
-        #print(program_command, trim_command)
-        tag_lock.release()
 
         connection.sendall(command_tags)
 
         limit_switch_status, limit_switch = get_switch_status(limit_switch, module_number)
+
         sero_input_registers, servo = read_servo(servo)
 
         servo_output_registers = set_servo_enable(servo_output_registers, limit_switch_status)
@@ -99,7 +82,7 @@ while connection_count < 5:
             servo_output_registers = set_start_move(servo_output_registers, False)
             even_loop = False
         else:
-            if limit_switch_status == 1 and abs(deviation) > 0.01:
+            if limit_switch_status == 1 and abs(deviation) > 0.01 and speed > 0.1:
                 servo_output_registers = set_start_move(servo_output_registers, True)
             even_loop = True
         
