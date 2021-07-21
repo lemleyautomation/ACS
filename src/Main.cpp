@@ -8,13 +8,7 @@ Images images;
 //#include "ModbusInterface.hpp"
 
 void programLoop(){
-    // a variable that allows us to measure the length of one program scan.
-    std::chrono::time_point<std::chrono::system_clock> initial_time = std::chrono::system_clock::now();
     std::chrono::time_point<std::chrono::system_clock> begin_time, end_time;
-    RollingAverage stop_watch;
-    stop_watch.reset();
-    stop_watch.base = 10;
-
     int image_error = 0;
 
     while (image_error >= 0){
@@ -37,17 +31,7 @@ void programLoop(){
         }
 
         end_time = std::chrono::system_clock::now();
-        float loop_duration = stop_watch.update(std::chrono::duration_cast<std::chrono::milliseconds>(end_time-begin_time).count());
-        
-        if (loop_duration > 150 && !stop_watch.startup()){
-            std::cout << "loop too slow...";
-            int program_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-initial_time).count();
-            if (program_duration > 10000){
-                std::cout << "restarting." << std::endl;
-                break;
-            }
-            std::cout << std::endl;
-        }
+        float loop_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-begin_time).count();
     }
 }
 
@@ -65,9 +49,7 @@ int main(int number_of_command_arguments, char **command_line_arguments){
         return -1;
     }
 
-    if (!tcpStart()){
-        return -1;
-    }
+    tcpStart();
 
     if (startCamera() != 0){
         std::cout << "error starting camera." << std::endl;
@@ -81,5 +63,4 @@ int main(int number_of_command_arguments, char **command_line_arguments){
     programLoop();
 
     stopCamera();
-    tcpStop();
 }

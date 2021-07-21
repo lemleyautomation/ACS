@@ -5,6 +5,7 @@ from threading import Thread, Lock
 import socket
 import sys
 from bitFunctions import get_bit, set_bit, clear_bit, write_bit, write_float, write_32_bit_word, pw
+import pickle
 
 def get_IP_address():
     # Unless we try to connect to something, the IP address we get will just be 'localhost'
@@ -106,9 +107,21 @@ def set_start_move(servo_output_registers, status):
         servo_output_registers[0] = clear_bit(servo_output_registers[0], 3) # set start move to LOW
     return servo_output_registers
 
-def format_message(coded_message):
+def set_motor_speed(servo_output_registers, speed_command, acceleration_command, deceleration_command):
+    servo_output_registers[20] = int(acceleration_command*100)
+    servo_output_registers[21] = 0
+    servo_output_registers[24] = int(deceleration_command*100)
+    servo_output_registers[25] = 0
+    servo_output_registers[28] = int(speed_command*100)
+    servo_output_registers[29] = 0
+    return servo_output_registers
+
+def format_message(tags, tag_lock, coded_message):
     if (len(coded_message) == 0):
-        return -2, -2, -2, -2, -2
+        tag_lock.acquire()
+        tags['stop'] = True
+        tag_lock.release()
+        return tags
     # these messages are coming from the vision program running on this same pc
     # a message looks like this: "6:1.23:0.1234:2:M"
     message = coded_message.decode('utf-8')   # convert from internet freindly byte array to string.
@@ -116,62 +129,34 @@ def format_message(coded_message):
     message = message[0]                # Only the first one is likely to be uncorrupted
     message = message.split(':')        # split message into its separate variables
     try:                                # if the message is corrupted, converting from string to float or int will fail.
-        module = int(message[0])
-        deviation = float(message[1])
-        speed = float(message[2])
-        current_program = int(message[3])
-        current_trim = int(message[4])
-        return module, deviation, speed, current_program, current_trim
+        tag_lock.acquire()
+        tags['timeout'] = False
+        tags['deviation'] = float(message[0])
+        tags['speed'] = float(message[1])
+        tags['program'] = int(message[2])
+        tags['trim'] = int(message[3])
+        tag_lock.release()
+        return tags
     except:
-        return -1, -1, -1, -1, -1
+        tag_lock.acquire()
+        tags['timeout'] = True
+        tag_lock.release()
+        return tags
 
-def tag_server(tags,lock):
-    response = "6:-0.1:0.1:2:4:M"
-
-    stop = 0
-    while stop != -1:
-        lock.acquire()
-        stop = tags[0]
-        lock.release()
-
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.settimeout(0.2)
+def tag_server(tags,tag_lock):
+    while not tags['stop']:
         try:
-            server.connect(('192.168.1.21', 8080))
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tag_server:
+                tag_server.connect(('192.168.1.21', 8080+tags['module']))
+                tag_server.sendall(pickle.dumps(tags))
+                recieved_tags = pickle.loads(tag_server.recv(1024))
+                tag_lock.acquire()
+                tags['program command'] = recieved_tags['program command']
+                tags['trim command'] = recieved_tags['trim command']
+                tag_lock.release()
         except:
-            continue
+            pass
+        sleep(0.064)
 
-        while stop != -1:
-            lock.acquire()
-            stop = tags[0]
-            lock.release()
-            
-            try:
-                coded_message = server.recv(100)
-            except socket.timeout:
-                continue
-            except:
-                break
-            if len(coded_message) == 0:
-                break
-
-            try:
-                server.sendall(response.encode('utf-8'))
-            except socket.timeout:
-                continue
-            except:
-                break
-
-            message = coded_message.decode('utf-8')   # convert from internet freindly byte array to string.
-            message = message.split('M')        # the string may have multiple messages.
-            message = message[0]                # Only the first one is likely to be uncorrupted
-            message = message.split(':')
-
-            lock.acquire()
-            tags[5] = int(message[0])
-            tags[6] = int(message[1])
-            response = str(tags[0]) + ':' + str(tags[1]) + ':' + str(tags[2]) + ':' + str(tags[3])  + ':' + str(tags[4]) + ':M'
-            #print(response)
-            lock.release()
-        
+    print('tag server shutdown')
     return

@@ -18,6 +18,8 @@ void processChanel(cv::Mat channel, cv::Mat& magnitude, cv::Mat& angle){
     angle.convertTo(angle, CV_8U);
 }
 
+float travel_integration = 0;
+
 void computeSpeed(Images *images){
     cv::Mat image, templat, heat_map;
     float scale_factor = 0.5;
@@ -33,11 +35,16 @@ void computeSpeed(Images *images){
     
     cv::Point position = getPosition(heat_map);
 
-    int travel = (position.x/scale_factor) - 6;
+    if (position.x > travel_integration)
+        travel_integration++;
+    else if (position.x < travel_integration)
+        travel_integration--;
+
+    int travel = ((int)travel_integration/scale_factor) - 6;
     images->travel = travel*4;
 }
 
-float pos = 50;
+float shift_integration = 50;
 
 void computeMovement(Images *images){
     computeSpeed(images);
@@ -97,15 +104,15 @@ void computeMovement(Images *images){
 
         position = getPosition(result);
 
-        if (position.y > pos)
-            pos++;
-        else if (position.y < pos)
-            pos--;
+        if (position.y > shift_integration)
+            shift_integration++;
+        else if (position.y < shift_integration)
+            shift_integration--;
         
         if (images->travel_average.avg < 50)
-            pos = int((float)images->center_cam/2.56);
+            shift_integration = int((float)images->center_cam/2.56);
 
-        shift = int(pos*2.56) + images->trim;
+        shift = int(shift_integration*2.56) + images->trim;
         //std::cout << "\t" << position.y << "\t" << shift << "\n";
         shift = -((shift-(images->center_cam))*4);
 
@@ -180,16 +187,16 @@ void computeMovement(Images *images){
 
         position.y += (margin*2);
 
-        if (position.y > pos)
-            pos++;
-        else if (position.y < pos)
-            pos--;
+        if (position.y > shift_integration)
+            shift_integration++;
+        else if (position.y < shift_integration)
+            shift_integration--;
         
         if (images->travel_average.avg < 50)
-            pos = int((float)images->center_cam/2.56);
+            shift_integration = int((float)images->center_cam/2.56);
 
         //shift = int(position.y*2.56) + window_offset;
-        shift = int(pos*2.56) + images->trim;
+        shift = int(shift_integration*2.56) + images->trim;
         //std::cout << "\t" << position.y << "\t" << shift << "\t" << pos << "\n";
         shift = -((shift-(images->center_cam))*4);
 
