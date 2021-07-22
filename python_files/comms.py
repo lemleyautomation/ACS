@@ -18,8 +18,8 @@ limit_switch = connect_to_limit_switch()
 limit_switch_status, limit_switch = get_switch_status(limit_switch, module_number)
 
 servo = connect_to_servo(module_number)
-sero_input_registers, servo_output_registers, servo = read_servo(servo, both=True)
-configure_servo(servo, sero_input_registers, servo_output_registers)
+servo_input_registers, servo_output_registers, servo = read_servo(servo, both=True)
+configure_servo(servo, servo_input_registers, servo_output_registers)
 heartbeat_timeout = now()
 
 even_loop = True
@@ -70,12 +70,13 @@ while True:
 
         tags['enabled'], limit_switch = get_switch_status(limit_switch, tags['module'])
 
-        sero_input_registers, servo = read_servo(servo)
+        servo_input_registers, servo = read_servo(servo)
+        tags['servo ready'] = get_bit(servo_input_registers[44], 3)
 
         servo_output_registers = set_servo_enable(servo_output_registers, tags['enabled'])
 
         #if true, a heartbeat transition has occured
-        if get_heartbeat_status(sero_input_registers) != get_heartbeat_response(servo_output_registers): 
+        if get_heartbeat_status(servo_input_registers) != get_heartbeat_response(servo_output_registers): 
             heartbeat_timeout = now()
 
         #if the heartbeat flag hasn't changed in 3 seconds, assume bad connnection and reset socket
@@ -84,14 +85,14 @@ while True:
             servo.close()
             servo = connect_to_servo(tags['module'])
 
-        servo_output_registers = set_heartbeat_response(servo_output_registers, get_heartbeat_status(sero_input_registers))
+        servo_output_registers = set_heartbeat_response(servo_output_registers, get_heartbeat_status(servo_input_registers))
 
         deviation_direction = tags['deviation'] / abs(tags['deviation'] + 0.0000001)
         if previous_deviation_direction != deviation_direction:
             tags['deviation'] = tags['deviation'] * 1.05
         previous_deviation_direction = tags['deviation'] / abs(tags['deviation'] + 0.0000001)
 
-        current_position = get_servo_position(sero_input_registers)
+        current_position = get_servo_position(servo_input_registers)
         desired_position = current_position - tags['deviation']
         servo_output_registers = set_servo_position(servo_output_registers, desired_position)
 
@@ -109,7 +110,7 @@ while True:
             even_loop = True
         
         servo.write_registers(0,servo_output_registers)
-        #pw((sero_input_registers[44], servo_output_registers[2]))
+        #pw((servo_input_registers[44], servo_output_registers[2]))
 
 limit_switch.close()
 servo.close()
