@@ -1,7 +1,8 @@
 import json
 import pylibmodbus as mod
 import numpy as np
-from time import time, sleep
+from time import time as now
+from time import sleep
 from threading import Thread, Lock
 import socket
 import sys
@@ -131,6 +132,7 @@ def reset_servo_alarms(servo_output_registers, tags, tag_lock):
 
 def recieve_message(tags, tag_lock, coded_message):
     tag_lock.acquire()
+    tags['timeout'] = now()
     message = json.loads(coded_message)
     for tag, value in message.items():
         tags[tag] = value

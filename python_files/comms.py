@@ -46,13 +46,13 @@ server_address = ('127.0.0.1', 8079)
 server_socket.bind(server_address)
 server_socket.listen()
 
-while True: 
+while not tags['stop']: 
     tag_server_thread = Thread(target=tag_server, args=(tags,tag_lock))
     tag_server_thread.start()
 
     connection, client_address = server_socket.accept()
         
-    while True:
+    while not tags['stop']:
         try:
             coded_message = connection.recv(1024)
             if not coded_message:
@@ -99,6 +99,7 @@ while True:
         desired_position = current_position - tags['deviation']
         servo_output_registers = set_servo_position(servo_output_registers, desired_position)
 
+        #print((tags['speed']<0.05), round(tags['speed'],2))
         tags['underspeed'] = (tags['speed'] < 0.05)
         if tags['speed'] < 0.2:
             servo_output_registers =  set_motor_speed(servo_output_registers, 1.5, 3, 3)
