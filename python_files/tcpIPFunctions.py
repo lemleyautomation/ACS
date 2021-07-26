@@ -117,6 +117,18 @@ def set_motor_speed(servo_output_registers, speed_command, acceleration_command,
     servo_output_registers[29] = 0
     return servo_output_registers
 
+def reset_servo_alarms(servo_output_registers, tags, tag_lock):
+    servo_output_registers[0] = write_bit(servo_output_registers[0], 7, 0 )
+    servo_output_registers[0] = write_bit(servo_output_registers[0], 8, 0 )
+    if tags['enabled'] != tags['prev enabled']:
+        servo_output_registers[0] = write_bit(servo_output_registers[0], 7, 1 )
+        servo_output_registers[0] = write_bit(servo_output_registers[0], 8, 1 )
+    tag_lock.acquire()
+    tags['prev enabled'] = tags['enabled']
+    tag_lock.release()
+    return servo_output_registers
+
+
 def recieve_message(tags, tag_lock, coded_message):
     tag_lock.acquire()
     message = json.loads(coded_message)

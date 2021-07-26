@@ -9,7 +9,7 @@ import sys
 from bitFunctions import get_bit, set_bit, clear_bit, write_bit, write_float, write_32_bit_word, pw
 from tcpIPFunctions import get_IP_address, connect_to_limit_switch, get_switch_status, connect_to_servo, read_servo, configure_servo
 from tcpIPFunctions import get_heartbeat_status, get_heartbeat_response, set_heartbeat_response, set_servo_enable, get_servo_position, set_servo_position, set_start_move
-from tcpIPFunctions import recieve_message, tag_server, set_motor_speed
+from tcpIPFunctions import recieve_message, tag_server, set_motor_speed, reset_servo_alarms
 
 ip_address = get_IP_address()
 module_number = int(ip_address[-1])
@@ -71,13 +71,7 @@ while True:
             break
         
         tags['enabled'], limit_switch = get_switch_status(limit_switch, tags['module'])
-        servo_output_registers[0] = write_bit(servo_output_registers[0], 7, 0 )
-        servo_output_registers[0] = write_bit(servo_output_registers[0], 8, 0 )
-        if tags['enabled'] != tags['prev enabled']:
-            servo_output_registers[0] = write_bit(servo_output_registers[0], 7, 1 )
-            servo_output_registers[0] = write_bit(servo_output_registers[0], 8, 1 )
-            print('transition')
-        tags['prev enabled'] = tags['enabled']
+        servo_output_registers = reset_servo_alarms(servo_output_registers, tags, tag_lock)
 
         servo_input_registers, servo = read_servo(servo)
         tags['servo ready'] = get_bit(servo_input_registers[44], 3)
