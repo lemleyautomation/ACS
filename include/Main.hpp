@@ -131,8 +131,7 @@ struct Tags{
 
     std::string serialize(){
         std::stringstream tcpMessage;
-        tcpMessage << "{\"module\":" << module_number << ',';
-        tcpMessage << "\"deviation\":" << deviation << ',';
+        tcpMessage << "{\"deviation\":" << deviation << ',';
         tcpMessage << "\"speed\":" << speed << ',';
         tcpMessage << "\"program\":" << program << ',';
         tcpMessage << "\"trim\":" << trim << '}';

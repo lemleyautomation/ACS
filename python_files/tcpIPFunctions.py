@@ -120,14 +120,9 @@ def set_motor_speed(servo_output_registers, speed_command, acceleration_command,
 def recieve_message(tags, tag_lock, coded_message):
     tag_lock.acquire()
     message = json.loads(coded_message)
-    tags['deviation'] = message['deviation']
-    tags['speed'] = message['speed']
-    tags['program'] = message['program']
-    tags['trim'] = message['trim']
-    response = {}
-    response['program command'] = tags['program command']
-    response['trim command'] = tags['trim command']
-    coded_response = json.dumps(response).encode('utf-8')
+    for tag, value in message.items():
+        tags[tag] = value
+    coded_response = json.dumps(tags).encode('utf-8')
     tag_lock.release()
     return coded_response
 
@@ -136,8 +131,8 @@ def tag_server(tags,tag_lock):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tag_server:
                 tag_server.connect(('192.168.1.21', 8080+tags['module']))
-                tag_server.sendall(pickle.dumps(tags))
-                recieved_tags = pickle.loads(tag_server.recv(1024))
+                tag_server.sendall(json.dumps(tags).encode('utf-8'))
+                recieved_tags = json.loads(tag_server.recv(1024))
                 tag_lock.acquire()
                 tags['program command'] = recieved_tags['program command']
                 tags['trim command'] = recieved_tags['trim command']

@@ -105,6 +105,7 @@ while True:
         desired_position = current_position - tags['deviation']
         servo_output_registers = set_servo_position(servo_output_registers, desired_position)
 
+        tags['underspeed'] = (tags['speed'] < 0.05)
         if tags['speed'] < 0.2:
             servo_output_registers =  set_motor_speed(servo_output_registers, 1.5, 3, 3)
         else:
@@ -114,7 +115,7 @@ while True:
             servo_output_registers = set_start_move(servo_output_registers, False)
             even_loop = False
         else:
-            if tags['enabled'] and abs(tags['deviation']) > 0.01 and tags['speed'] > 0.05:
+            if tags['enabled'] and abs(tags['deviation']) > 0.01 and not tags['underspeed']:
                 servo_output_registers = set_start_move(servo_output_registers, True)
             even_loop = True
         
