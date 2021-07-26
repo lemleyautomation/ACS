@@ -60,7 +60,6 @@ void computeMovement(Images *images){
     int shift = 0;
 
     images->program = 2;
-    images->trim = 0;
 
     if (images->program == 1){
         images->shift_average.base = 7;

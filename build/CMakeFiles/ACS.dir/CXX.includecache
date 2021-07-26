@@ -6,8 +6,6 @@
 
 #IncludeRegexTransform: 
 
-../include/CameraInterface.hpp
-
 ../include/Main.hpp
 unistd.h
 -
@@ -65,20 +63,6 @@ rapidjson/writer.h
 ../include/rapidjson/writer.h
 rapidjson/stringbuffer.h
 ../include/rapidjson/stringbuffer.h
-
-../include/SocketClient.hpp
-sys/types.h
--
-sys/socket.h
--
-arpa/inet.h
--
-netinet/in.h
--
-arpa/inet.h
--
-netdb.h
--
 
 ../include/rapidjson/allocators.h
 rapidjson.h
@@ -329,14 +313,6 @@ emmintrin.h
 -
 arm_neon.h
 -
-
-/home/pi/Desktop/ACS/src/Main.cpp
-Main.hpp
-/home/pi/Desktop/ACS/src/Main.hpp
-SocketClient.hpp
-/home/pi/Desktop/ACS/src/SocketClient.hpp
-CameraInterface.hpp
-/home/pi/Desktop/ACS/src/CameraInterface.hpp
 
 /home/pi/Desktop/ACS/src/VisionAlgorithm.cpp
 Main.hpp

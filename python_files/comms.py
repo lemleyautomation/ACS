@@ -30,6 +30,7 @@ previous_deviation_direction = 0
 tags = { 'module' : module_number }
 tags['deviation'] = 0.0
 tags['speed'] = 0.0
+tags['underspeed'] = False
 tags['program'] = 2
 tags['trim'] = 0
 tags['program command'] = 2
@@ -99,7 +100,6 @@ while not tags['stop']:
         desired_position = current_position - tags['deviation']
         servo_output_registers = set_servo_position(servo_output_registers, desired_position)
 
-        #print((tags['speed']<0.05), round(tags['speed'],2))
         tags['underspeed'] = (tags['speed'] < 0.05)
         if tags['speed'] < 0.2:
             servo_output_registers =  set_motor_speed(servo_output_registers, 1.5, 3, 3)

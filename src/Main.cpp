@@ -21,7 +21,7 @@ void programLoop(socketData socket_data){
 
         images.program = tags.program;
         float trim_in_inches = (float)tags.trim/32.0;
-        float trim_in_pixels = trim_in_inches/(float)ppi;
+        float trim_in_pixels = trim_in_inches*(float)ppi;
         images.trim = (int)trim_in_pixels;
         
         if (!image_error){
