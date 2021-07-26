@@ -64,6 +64,7 @@ void computeMovement(Images *images){
 
     if (images->program == 1){
         images->shift_average.base = 7;
+        images->travel_average.base = 3;
         cv::Rect roi( 0, (images->center_cam)-25, images->pattern_image.cols, 50);
         cv::resize(images->current_image, im, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
         cv::resize(images->pattern_image(roi), tm, cv::Size(), 0.5, 1, cv::INTER_LINEAR );
@@ -76,6 +77,7 @@ void computeMovement(Images *images){
     }
     else if (images->program == 2){
         images->shift_average.base = 4;
+        images->travel_average.base = 3;
 
         cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
         
@@ -120,6 +122,7 @@ void computeMovement(Images *images){
     }
     else{
         images->shift_average.base = 4;
+        images->travel_average.base = 3;
 
         cv::resize(images->current_image, im, cv::Size(100,100), 0,0, cv::INTER_AREA );
         cv::GaussianBlur(im, im, cv::Size(0,0), 1);
@@ -216,6 +219,7 @@ void getMovement(Images *local_set){
         start_comp = std::chrono::system_clock::now();
         ///////////////////////////////////////////////////////////////////////////////////////
         if (loaded && dF.count() <=300){
+            local_set->trim = local_set->trim/4;
             computeMovement(local_set);
         }
         local_set->previous_image = local_set->current_image.clone();

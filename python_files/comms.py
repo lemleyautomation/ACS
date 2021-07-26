@@ -1,3 +1,4 @@
+import json
 import pylibmodbus as mod
 import numpy as np
 from time import sleep
@@ -8,7 +9,7 @@ import sys
 from bitFunctions import get_bit, set_bit, clear_bit, write_bit, write_float, write_32_bit_word, pw
 from tcpIPFunctions import get_IP_address, connect_to_limit_switch, get_switch_status, connect_to_servo, read_servo, configure_servo
 from tcpIPFunctions import get_heartbeat_status, get_heartbeat_response, set_heartbeat_response, set_servo_enable, get_servo_position, set_servo_position, set_start_move
-from tcpIPFunctions import format_message, tag_server, set_motor_speed
+from tcpIPFunctions import recieve_message, tag_server, set_motor_speed
 
 ip_address = get_IP_address()
 module_number = int(ip_address[-1])
@@ -23,19 +24,18 @@ configure_servo(servo, servo_input_registers, servo_output_registers)
 heartbeat_timeout = now()
 
 even_loop = True
-coded_message = 'hello'.encode('utf-8')
-command_tags  = bytearray("B20E", 'utf-8')
 
 previous_deviation_direction = 0
 
 tags = { 'module' : module_number }
-tags['enabled'] = False
 tags['deviation'] = 0.0
 tags['speed'] = 0.0
 tags['program'] = 2
 tags['trim'] = 0
 tags['program command'] = 2
-tags['trim command'] = 0
+tags['trim command'] = -32
+tags['enabled'] = False
+tags['prev enabled'] = False
 tags['stop'] = False
 tags['timeout'] = False
 tag_lock = Lock()
@@ -55,20 +55,29 @@ while True:
     while True:
         try:
             coded_message = connection.recv(1024)
-            connection.sendall(command_tags)
+            if not coded_message:
+                tag_lock.acquire()
+                tags['stop'] = True
+                tag_lock.release()
+                break
+            coded_response = recieve_message(tags, tag_lock, coded_message)
+            connection.sendall(coded_response)
+        except socket.timeout:
+            continue
         except:
+            tag_lock.acquire()
+            tags['stop'] = True
+            tag_lock.release()
             break
         
-        tags = format_message(tags, tag_lock, coded_message)
-        if tags['timeout']:
-            continue
-        elif tags['stop']:
-            break
-
-        command_tags[1] = tags['program command']
-        command_tags[2] = tags['trim command'] + 127
-
         tags['enabled'], limit_switch = get_switch_status(limit_switch, tags['module'])
+        servo_output_registers[0] = write_bit(servo_output_registers[0], 7, 0 )
+        servo_output_registers[0] = write_bit(servo_output_registers[0], 8, 0 )
+        if tags['enabled'] != tags['prev enabled']:
+            servo_output_registers[0] = write_bit(servo_output_registers[0], 7, 1 )
+            servo_output_registers[0] = write_bit(servo_output_registers[0], 8, 1 )
+            print('transition')
+        tags['prev enabled'] = tags['enabled']
 
         servo_input_registers, servo = read_servo(servo)
         tags['servo ready'] = get_bit(servo_input_registers[44], 3)

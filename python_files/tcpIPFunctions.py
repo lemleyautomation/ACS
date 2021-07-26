@@ -1,3 +1,4 @@
+import json
 import pylibmodbus as mod
 import numpy as np
 from time import time, sleep
@@ -116,32 +117,19 @@ def set_motor_speed(servo_output_registers, speed_command, acceleration_command,
     servo_output_registers[29] = 0
     return servo_output_registers
 
-def format_message(tags, tag_lock, coded_message):
-    if (len(coded_message) == 0):
-        tag_lock.acquire()
-        tags['stop'] = True
-        tag_lock.release()
-        return tags
-    # these messages are coming from the vision program running on this same pc
-    # a message looks like this: "6:1.23:0.1234:2:M"
-    message = coded_message.decode('utf-8')   # convert from internet freindly byte array to string.
-    message = message.split('M')        # the string may have multiple messages.
-    message = message[0]                # Only the first one is likely to be uncorrupted
-    message = message.split(':')        # split message into its separate variables
-    try:                                # if the message is corrupted, converting from string to float or int will fail.
-        tag_lock.acquire()
-        tags['timeout'] = False
-        tags['deviation'] = float(message[0])
-        tags['speed'] = float(message[1])
-        tags['program'] = int(message[2])
-        tags['trim'] = int(message[3])
-        tag_lock.release()
-        return tags
-    except:
-        tag_lock.acquire()
-        tags['timeout'] = True
-        tag_lock.release()
-        return tags
+def recieve_message(tags, tag_lock, coded_message):
+    tag_lock.acquire()
+    message = json.loads(coded_message)
+    tags['deviation'] = message['deviation']
+    tags['speed'] = message['speed']
+    tags['program'] = message['program']
+    tags['trim'] = message['trim']
+    response = {}
+    response['program command'] = tags['program command']
+    response['trim command'] = tags['trim command']
+    coded_response = json.dumps(response).encode('utf-8')
+    tag_lock.release()
+    return coded_response
 
 def tag_server(tags,tag_lock):
     while not tags['stop']:

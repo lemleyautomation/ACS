@@ -5,53 +5,33 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-int server_socket_id;
-struct sockaddr_in server_socket;
+struct socketData{
+	int socket;
+	struct sockaddr_in server_address;
+};
 
-void tcpStart(){
-	server_socket_id = socket(AF_INET, SOCK_STREAM, 0);
+socketData configure_socket(std::string IP_address, int PORT){
+	socketData socket_data;
+
+	socket_data.socket = socket(AF_INET, SOCK_STREAM, 0);
 	
-	memset(&server_socket, 0, sizeof(server_socket));
-	server_socket.sin_family = AF_INET;
-    server_socket.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server_socket.sin_port = htons(8079);
-	struct timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = 3000;
-	setsockopt(server_socket_id, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv));
-	
-	std::cout << "connecting...";
-	if (connect(server_socket_id, (struct sockaddr*)&server_socket, sizeof(server_socket)) == 0)
-		std::cout << "connected" << std::endl;
-	else
-		std::cout << "failed" << std::endl;
+	memset(&socket_data.server_address, 0, sizeof(socket_data.server_address));
+	socket_data.server_address.sin_family = AF_INET;
+    socket_data.server_address.sin_addr.s_addr = inet_addr((char*)IP_address.c_str());
+    socket_data.server_address.sin_port = htons(PORT);
+
+	return socket_data;
 }
 
-void tcpUpdate(){
-	std::chrono::time_point<std::chrono::system_clock> begin_time, end_time;
-	begin_time = std::chrono::system_clock::now(); 
-
-	std::stringstream tcpMessage;
-	tcpMessage << tags.deviation << ':' << tags.speed << ':' << tags.program << ':' << tags.trim << "M";
-	char formatted_message[tcpMessage.str().length()+1];
-	strcpy(formatted_message, tcpMessage.str().c_str());
-
-	write(server_socket_id, formatted_message, sizeof(formatted_message));
+std::string send_message(std::string message, socketData socket_data){
+	char buffer[1024];
 	
-	char response[100];
-	int number_of_bytes_read = read(server_socket_id, response, sizeof(response));
+	connect(socket_data.socket, (struct sockaddr*)&socket_data.server_address, sizeof(socket_data.server_address));
+	send(socket_data.socket, (char*)message.c_str() , strlen((char*)message.c_str()) , 0 );
+	int number_of_bytes_read = read(socket_data.socket, buffer, 1024);
 
-	if (number_of_bytes_read >= 3){
-		tags.program = (int)response[1];
-		tags.trim = (int)response[2]-127;
-		//std::cout << tags.program << "\t" << tags.trim << std::endl;
-	}
-	if (response[0] != 'B'){
-		close(server_socket_id);
-		tcpStart();
-	}
-
-	end_time = std::chrono::system_clock::now();
-    float loop_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time-begin_time).count();
-	//std::cout << "socket comms: " << loop_duration << std::endl;
+	buffer[number_of_bytes_read] = '\0';
+	std::string response = "";
+	response.append(buffer);
+	return response;
 }

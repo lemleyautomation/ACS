@@ -35,6 +35,10 @@ using namespace Spinnaker::GenICam;
 
 #include <modbus.h>
 
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 const int ppi = 300;
 
 static int camera_offsets [] = {
@@ -53,7 +57,7 @@ static int camera_offsets [] = {
 struct RollingAverage{
     int samples[100];
     int head = 0;
-    int base = 0;
+    int base = 1;
     float avg = 0;
     int start_count = 0;
 
@@ -75,7 +79,6 @@ struct RollingAverage{
         for(int i = 0; i < base; i++){
             average += (float)samples[i];
         }
-
         average = average / (float)base;
         avg = average;
         return average;
@@ -94,7 +97,7 @@ struct Images{
     std::chrono::time_point<std::chrono::system_clock> p_stamp;
 
     int center_cam;
-    int program = 1;
+    int program = 2;
     int trim = 0;
 
     int shift;
@@ -107,11 +110,11 @@ struct Images{
 };
 
 struct Tags{
-    float deviation;
-    float speed;
+    float deviation = 0;
+    float speed = 0;
     bool shutdown = false;
     
-    int program = 1;
+    int program = 2;
     int trim = 0;
 
     int module_number = 0;
@@ -125,6 +128,28 @@ struct Tags{
                                 "192.168.1.38",
                                 "192.168.1.39"};
     std::string serial_number;
+
+    std::string serialize(){
+        std::stringstream tcpMessage;
+        tcpMessage << "{\"module\":" << module_number << ',';
+        tcpMessage << "\"deviation\":" << deviation << ',';
+        tcpMessage << "\"speed\":" << speed << ',';
+        tcpMessage << "\"program\":" << program << ',';
+        tcpMessage << "\"trim\":" << trim << '}';
+        return tcpMessage.str();
+    }
+    void deserialize(std::string tcpMessage){
+        rapidjson::Document document;
+        document.Parse((char*)tcpMessage.c_str());
+
+        if (document.IsObject()){
+            rapidjson::Value& program_command_tag = document["program command"];
+            program = program_command_tag.GetInt();
+
+            rapidjson::Value& trim_command_tag = document["trim command"];
+            trim = trim_command_tag.GetInt();
+        }
+    }
 };
 
 void getMovement(Images *local_set);
