@@ -145,6 +145,10 @@ struct Tags{
             rapidjson::Value& program_command_tag = document["program command"];
             program = program_command_tag.GetInt();
 
+            if (program > 3 || program < 1){
+                program = 2;
+            }
+
             rapidjson::Value& trim_command_tag = document["trim command"];
             trim = trim_command_tag.GetInt();
 

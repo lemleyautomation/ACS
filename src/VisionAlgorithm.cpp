@@ -60,6 +60,7 @@ void computeMovement(Images *images){
     int shift = 0;
 
     //images->program = 2;
+    //std::cout << images->program << std::endl;
 
     if (images->program == 1){
         images->shift_average.base = 7;
@@ -114,7 +115,7 @@ void computeMovement(Images *images){
             shift_integration = int((float)images->center_cam/2.56);
 
         shift = int(shift_integration*2.56) + images->trim;
-        //std::cout << "\t" << position.y << "\t" << shift << "\n";
+        //std::cout << "\t" << position.y << "\t" << shift_integration << "\t" << images->trim << "\t" << shift << "\n";
         shift = -((shift-(images->center_cam))*4);
 
         images->shift = shift;
@@ -205,6 +206,7 @@ void computeMovement(Images *images){
         images->shift = shift;
     }
 
+    //std::cout << images->shift << std::endl;
     //images->shift += images->trim;
 }
 

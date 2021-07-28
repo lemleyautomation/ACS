@@ -22,6 +22,7 @@ servo = connect_to_servo(module_number)
 servo_input_registers, servo_output_registers, servo = read_servo(servo, both=True)
 configure_servo(servo, servo_input_registers, servo_output_registers)
 heartbeat_timeout = now()
+start_position = get_servo_position(servo_input_registers)
 
 even_loop = True
 
@@ -34,7 +35,7 @@ tags['underspeed'] = False
 tags['program'] = 2
 tags['trim'] = 0
 tags['program command'] = 2
-tags['trim command'] = -32
+tags['trim command'] = 0
 tags['enabled'] = False
 tags['prev enabled'] = False
 tags['stop'] = False
@@ -98,6 +99,7 @@ while not tags['stop']:
 
         current_position = get_servo_position(servo_input_registers)
         desired_position = current_position - tags['deviation']
+        distance_from_start = abs(desired_position-start_position)
         servo_output_registers = set_servo_position(servo_output_registers, desired_position)
 
         tags['underspeed'] = (tags['speed'] < 0.05)
@@ -110,7 +112,7 @@ while not tags['stop']:
             servo_output_registers = set_start_move(servo_output_registers, False)
             even_loop = False
         else:
-            if tags['enabled'] and abs(tags['deviation']) > 0.01 and not tags['underspeed']:
+            if tags['enabled'] and abs(tags['deviation']) > 0.01 and not tags['underspeed'] and distance_from_start < 5:
                 servo_output_registers = set_start_move(servo_output_registers, True)
             even_loop = True
         
