@@ -147,6 +147,10 @@ struct Tags{
 
             rapidjson::Value& trim_command_tag = document["trim command"];
             trim = trim_command_tag.GetInt();
+
+            if (trim < -32 || trim > 32){
+                trim = 0;
+            }
         }
     }
 };

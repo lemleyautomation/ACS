@@ -59,7 +59,7 @@ void computeMovement(Images *images){
     cv::Point position;
     int shift = 0;
 
-    images->program = 2;
+    //images->program = 2;
 
     if (images->program == 1){
         images->shift_average.base = 7;
